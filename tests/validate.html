@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Data validator</title>
+  <style>
+    body { font: 14px/1.5 system-ui, sans-serif; margin: 1.5rem; max-width: 60rem; }
+    h1 { font-size: 1.2rem; }
+    .pass { color: #1a7f37; } .fail { color: #b3261e; } .warn { color: #9a6700; }
+    li { margin: .35rem 0; } li ul { margin: .2rem 0 0 1rem; font-size: 13px; color: #333; }
+    #summary { font-weight: 700; margin: .5rem 0 1rem; }
+    .stats { color: #555; margin: 0 0 1rem; }
+    code { background: #f3f3f3; padding: 0 .25rem; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <h1>Data validator</h1>
+  <p class="stats" id="stats">Loading…</p>
+  <p>Mode: <b id="mode"></b>. Add <code>?strict=1</code> to the URL for the project's definition of done (every paper authored, no placeholder edges).</p>
+  <div id="summary">Running…</div>
+  <ul id="results"></ul>
+<script type="module">
+import { loadAll } from '../js/data.js';
+import { validateData, requiredFiles, summarize } from '../js/validate.js';
+
+const strict = new URLSearchParams(location.search).get('strict') === '1';
+document.getElementById('mode').textContent = strict ? 'STRICT' : 'scoped to authored papers';
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+let data;
+try { data = await loadAll(); }
+catch (e) {
+  document.getElementById('summary').textContent = 'Could not load data: ' + e.message;
+  document.getElementById('summary').className = 'fail';
+  document.title = 'FAILED';
+  throw e;
+}
+
+const results = validateData(data, { strict });
+
+// R7: files the data refers to must exist (diagrams, widget configs)
+{
+  const problems = [];
+  const files = requiredFiles(data);
+  await Promise.all(files.map(async (f) => {
+    try {
+      const res = await fetch(new URL('../' + f.path, import.meta.url), { cache: 'no-cache' });
+      if (!res.ok) problems.push(`${f.id}: ${f.kind} ${f.path} (HTTP ${res.status})`);
+      else if (f.path.endsWith('.svg')) {
+        const txt = await res.text();
+        if (!/<svg[\s>]/.test(txt)) problems.push(`${f.id}: ${f.path} is not an SVG`);
+        if (/<script[\s>]|javascript:|\son\w+\s*=/i.test(txt)) problems.push(`${f.id}: ${f.path} contains script or event handlers`);
+        if (/(?:href|src)\s*=\s*["']https?:/i.test(txt)) problems.push(`${f.id}: ${f.path} references a remote resource`);
+      }
+    } catch (e) { problems.push(`${f.id}: ${f.kind} ${f.path} could not be fetched`); }
+  }));
+  results.push({ id: 'R7', name: `Files: ${files.length} diagram/config files exist, and SVGs are script-free and local`, status: problems.length ? 'fail' : 'pass', problems: problems.sort(), warnings: [] });
+}
+results.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
+
+const s = summarize(data);
+document.getElementById('stats').textContent =
+  `${s.papers} papers (${s.authored} authored), ${s.ghosts} ghost nodes, ${s.edges} edges ` +
+  `(${s.explicit} explicit, ${s.interpretive} interpretive, ${s.placeholders} placeholder), ${s.reviewItems} items in the review queue.`;
+
+const failed = results.filter((r) => r.status === 'fail');
+const warned = results.filter((r) => r.status === 'warn');
+document.getElementById('summary').textContent =
+  failed.length ? `${failed.length} rule(s) FAILED` : warned.length ? `All rules pass (${warned.length} with warnings)` : 'All rules pass';
+document.getElementById('summary').className = failed.length ? 'fail' : warned.length ? 'warn' : 'pass';
+document.getElementById('results').innerHTML = results.map((r) => {
+  const label = { pass: 'PASS', warn: 'WARN', fail: 'FAIL' }[r.status];
+  const items = [...r.problems.map((p) => `<li class="fail">${esc(p)}</li>`), ...r.warnings.map((w) => `<li class="warn">${esc(w)}</li>`)];
+  return `<li class="${r.status}">${label} ${esc(r.id)}: ${esc(r.name)}${items.length ? `<ul>${items.join('')}</ul>` : ''}</li>`;
+}).join('');
+document.title = failed.length ? 'FAILED' : warned.length ? 'PASSED WITH WARNINGS' : 'ALL PASSED';
+</script>
+</body>
+</html>

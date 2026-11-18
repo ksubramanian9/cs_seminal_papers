@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Smoke tests</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <!-- Results are written to #report (hidden) and to the title, so the page keeps the app's full-window layout. -->
+</head>
+<body>
+  <header class="app-header"><h1>Smoke tests: the real app mounted on this page</h1></header>
+  <div id="error" class="error" role="alert" hidden></div>
+  <main class="app-main">
+    <section id="canvas" class="canvas"></section>
+    <aside id="panel" class="panel" hidden></aside>
+  </main>
+  <pre id="report" hidden></pre>
+
+  <script src="../vendor/d3.min.js"></script>
+  <script type="module">
+import { start } from '../js/app.js';
+import { createPanel } from '../js/panel.js';
+import { buildIndex, ancestors, descendants, rivals } from '../js/traverse.js';
+
+const canvasEl = document.getElementById('canvas');
+const panelEl = document.getElementById('panel');
+const errorEl = document.getElementById('error');
+const d = document, w = window;
+
+const results = [];
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+let app = null;
+
+/** Fresh mount of the real app, as if the page had just loaded with this hash. */
+async function mount(hash = '') {
+  app?.destroy();
+  panelEl.hidden = true; panelEl.textContent = '';
+  history.replaceState(null, '', location.pathname + hash);
+  app = await start({ canvasEl, panelEl, errorEl, animate: false }); // deterministic: headless browsers deliver animation frames erratically
+  await sleep(800); // let any focus transition finish
+  return app;
+}
+async function check(name, fn) {
+  try { await fn(); results.push({ name, ok: true }); }
+  catch (e) { results.push({ name, ok: false, msg: e.message }); }
+}
+const assert = (c, m) => { if (!c) throw new Error(m || 'assertion failed'); };
+const ids = (cls) => [...d.querySelectorAll(`.node.${cls}`)].map((n) => n.dataset.id).sort();
+const worldT = () => d.querySelector('.world').getAttribute('transform');
+const scaleOf = () => Number(/scale\(([\d.eE+-]+)\)/.exec(worldT())[1]);
+const transOf = () => /translate\(([\d.eE+-]+),\s*([\d.eE+-]+)\)/.exec(worldT()).slice(1).map(Number);
+const click = (el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: w }));
+const node = (id) => d.querySelector(`.node[data-id="${id}"]`);
+const btn = (t) => [...d.querySelectorAll('.zoom-controls button')].find((b) => b.textContent === t);
+const wheel = (dy, n = 1) => { for (let i = 0; i < n; i++) d.querySelector('.main-svg').dispatchEvent(new WheelEvent('wheel', { deltaY: dy, clientX: 500, clientY: 400, bubbles: true, cancelable: true })); };
+const esc = () => d.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+
+await mount();
+
+/** Expected lineage for a node, computed from the loaded edges (so tests survive data changes). */
+const expected = (id) => {
+  const ix = buildIndex(app.data.edges);
+  return {
+    anc: [...ancestors(ix, id)].sort().join(), desc: [...descendants(ix, id)].sort().join(),
+    rival: [...rivals(app.data.edges, id)].sort().join(),
+  };
+};
+
+await check('initial: one node per paper and ghost, one path per edge, nothing selected, no error', async () => {
+  assert(app, 'app failed to start');
+  const want = app.data.papers.length + app.data.ghosts.length;
+  assert(d.querySelectorAll('.node').length === want, `nodes=${d.querySelectorAll('.node').length} want ${want}`);
+  assert(d.querySelectorAll('.node.ghost').length === app.data.ghosts.length && app.data.ghosts.length >= 5, 'ghost nodes');
+  assert(d.querySelectorAll('.edge').length === app.data.edges.length, `edges=${d.querySelectorAll('.edge').length}`);
+  assert(!d.querySelector('.main-svg').classList.contains('has-sel'));
+  assert(panelEl.hidden && errorEl.hidden);
+});
+
+await check('initial: era bands in header, 12 lane labels, 4 legend groups', async () => {
+  assert(d.querySelectorAll('.era-header .era-band').length >= 6, 'era bands');
+  assert(d.querySelectorAll('.lane-label').length === 12, 'lane labels');
+  assert(d.querySelectorAll('.legend-group').length === 4, 'legend groups');
+});
+
+await check('initial fit: whole world inside the view, scale sensible', async () => {
+  const [tx, ty] = transOf();
+  assert(tx >= 0 && ty >= 0 && scaleOf() > 0.3 && scaleOf() < 1.2, `${worldT()}`);
+});
+
+await check('click node: selects, highlights ancestry/descendants/rival, opens panel, writes hash', async () => {
+  click(node('CS004'));
+  await sleep(600);
+  const ex = expected('CS004');
+  assert(ids('sel').join() === 'CS004', 'sel ' + ids('sel'));
+  assert(ids('anc').join() === ex.anc && ex.anc.includes('CS001') && ex.anc.includes('G002'), `anc ${ids('anc')} want ${ex.anc}`);
+  assert(ids('desc').join() === ex.desc && ex.desc.includes('CS007') && ex.desc.includes('CS014'), `desc ${ids('desc')} want ${ex.desc}`);
+  assert(ids('rival').join() === ex.rival && ex.rival === 'CS003', `rival ${ids('rival')} want ${ex.rival}`);
+  assert(d.querySelector('.main-svg').classList.contains('has-sel'));
+  assert(!panelEl.hidden && panelEl.querySelector('h2').textContent.includes('Computable Numbers'));
+  assert(location.hash === '#CS004', 'hash ' + location.hash);
+});
+
+await check('related edges are marked "on"; unrelated are not', async () => {
+  const on = d.querySelectorAll('.edge.on').length;
+  assert(on >= 5 && on < app.data.edges.length, `on edges=${on} of ${app.data.edges.length}`);
+});
+
+await check('panel: source link is http(s), new tab, noopener', async () => {
+  const a = panelEl.querySelector('a');
+  assert(a && /^https?:\/\//.test(a.href) && a.rel.includes('noopener') && a.target === '_blank');
+});
+
+await check('selecting another node switches the highlight', async () => {
+  click(node('CS075'));
+  await sleep(500);
+  const ex = expected('CS075');
+  assert(ids('sel').join() === 'CS075' && ids('desc').join() === ex.desc && ex.desc.includes('CS077'), `desc ${ids('desc')} want ${ex.desc}`);
+  assert(ids('anc').join() === ex.anc && location.hash === '#CS075');
+});
+
+await check('Escape clears selection, hides panel, clears hash', async () => {
+  esc(); await sleep(300);
+  assert(!d.querySelector('.main-svg').classList.contains('has-sel') && panelEl.hidden && location.hash === '', 'hash ' + location.hash);
+});
+
+await check('clicking blank canvas clears selection', async () => {
+  click(node('CS001')); await sleep(300);
+  assert(ids('sel').length === 1);
+  click(d.querySelector('.main-svg rect.bg')); await sleep(200);
+  assert(ids('sel').length === 0 && panelEl.hidden);
+});
+
+await check('panel close button clears selection', async () => {
+  click(node('CS027')); await sleep(300);
+  click(panelEl.querySelector('.panel-close')); await sleep(200);
+  assert(ids('sel').length === 0 && panelEl.hidden);
+});
+
+await check('keyboard: Enter on a focused node selects it; nodes are focusable', async () => {
+  const n = node('CS013');
+  assert(n.getAttribute('tabindex') === '0' && n.getAttribute('role') === 'button');
+  n.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+  await sleep(300);
+  assert(ids('sel').join() === 'CS013');
+  esc(); await sleep(200);
+});
+
+await check('wheel zoom in/out changes scale and respects limits', async () => {
+  const k0 = scaleOf();
+  wheel(-400); await sleep(150);
+  const k1 = scaleOf();
+  assert(k1 > k0, `zoom in ${k0} -> ${k1}`);
+  wheel(600, 60); await sleep(150);
+  const k2 = scaleOf();
+  assert(k2 < k1 && k2 >= 0.1, `zoom-out clamp ${k2}`);
+  wheel(-600, 100); await sleep(150);
+  assert(scaleOf() <= 3.0001, `max clamp ${scaleOf()}`);
+});
+
+await check('zoomed far out hides labels (svg.zoomed-out)', async () => {
+  wheel(600, 100); await sleep(150);
+  assert(d.querySelector('.main-svg').classList.contains('zoomed-out') || scaleOf() >= 0.5, 'labels should hide below k=0.5');
+});
+
+await check('Fit button returns to the fitted view (animated)', async () => {
+  wheel(-500, 5); await sleep(150);
+  const kZoomed = scaleOf();
+  click(btn('Fit')); await sleep(900);
+  const [tx, ty] = transOf();
+  assert(scaleOf() < kZoomed && tx === 0 && ty >= 0, `after fit ${worldT()} (was k=${kZoomed})`);
+  assert(!d.querySelector('.main-svg').classList.contains('zoomed-out'), 'labels visible at fit');
+});
+
+await check('zoom + button increases scale; − decreases it', async () => {
+  const k0 = scaleOf();
+  click(btn('+')); await sleep(700);
+  const k1 = scaleOf();
+  assert(k1 > k0, `+ ${k0} -> ${k1}`);
+  click(btn('−')); await sleep(700);
+  assert(scaleOf() < k1, `− ${k1} -> ${scaleOf()}`);
+});
+
+await check('drag pans the view when zoomed in, never past the world edge', async () => {
+  click(btn('Fit')); await sleep(900);
+  wheel(-500, 6); await sleep(200);
+  const svg = d.querySelector('.main-svg');
+  const [x0] = transOf();
+  const ev = (type, x, y, target) => target.dispatchEvent(new MouseEvent(type, { clientX: x, clientY: y, buttons: 1, bubbles: true, cancelable: true, view: w }));
+  ev('mousedown', 400, 400, svg); ev('mousemove', 300, 400, w); ev('mousemove', 200, 400, w); ev('mouseup', 200, 400, w);
+  await sleep(200);
+  const [x1] = transOf();
+  assert(x1 < x0, `pan ${x0} -> ${x1}`);
+  ev('mousedown', 400, 400, svg); ev('mousemove', 9000, 400, w); ev('mouseup', 9000, 400, w);
+  await sleep(200);
+  assert(transOf()[0] <= 0, 'must not pan right past the world start');
+});
+
+/* ---------- the explanation panel (M2) ---------- */
+await mount();
+const SECTIONS = ['The problem', 'The core insight', 'An analogy', 'What it unlocked', 'What it left open'];
+const h3s = () => [...panelEl.querySelectorAll('h3')].map((x) => x.textContent);
+const select = async (id) => { click(node(id)); await sleep(250); };
+
+await check('authored paper: all five sections, diagram with alt text, one-line summary, source link', async () => {
+  await select('CS004');
+  for (const s of SECTIONS) assert(h3s().includes(s), `missing section "${s}" in ${h3s()}`);
+  const img = panelEl.querySelector('img.diagram');
+  assert(img && img.alt.length > 20 && img.src.endsWith('diagrams/CS004.svg'), 'diagram + alt');
+  assert(panelEl.querySelector('.one-line').textContent.length > 5);
+  assert(panelEl.querySelector('.source a'));
+  assert(!panelEl.querySelector('.placeholder-note'), 'authored paper must not show the placeholder note');
+});
+
+await check('link lists: drew-on / led-to / rival groups match the edges, each with reason and evidence badge', async () => {
+  const E = app.data.edges;
+  const nonRival = (e) => e.type !== 'rival';
+  const want = {
+    'What this paper drew on': E.filter((e) => e.to === 'CS004' && nonRival(e)).length,
+    'What it led to': E.filter((e) => e.from === 'CS004' && nonRival(e)).length,
+    'Rival approaches': E.filter((e) => e.type === 'rival' && (e.from === 'CS004' || e.to === 'CS004')).length,
+  };
+  for (const [title, n] of Object.entries(want)) {
+    const sec = [...panelEl.querySelectorAll('section.links')].find((s) => s.querySelector('h3').textContent === title);
+    assert(sec, `no "${title}" group`);
+    assert(sec.querySelectorAll('li.link-item').length === n, `${title}: ${sec.querySelectorAll('li.link-item').length} items, want ${n}`);
+  }
+  for (const li of panelEl.querySelectorAll('li.link-item')) {
+    assert(li.querySelector('.link-why').textContent.length > 20, 'reason text');
+    assert(/^(explicit|interpretive)$/.test(li.querySelector('.badge').textContent), 'evidence badge');
+  }
+});
+
+await check('ghost entries in the link list are described but not clickable', async () => {
+  const ghostItem = panelEl.querySelector('li.link-item.ghost');
+  assert(ghostItem, 'CS004 should list the Hilbert ghost');
+  assert(!ghostItem.querySelector('button') && ghostItem.querySelector('.link-blurb').textContent.length > 20);
+  assert(ghostItem.textContent.includes('outside the list'));
+});
+
+await check('clicking a linked paper selects it, opens its panel and updates the hash', async () => {
+  const before = location.hash;
+  click(panelEl.querySelector('button[data-goto="CS002"]'));
+  await sleep(300);
+  assert(ids('sel').join() === 'CS002', 'sel ' + ids('sel'));
+  assert(panelEl.querySelector('h2').textContent.includes('Undecidable') && location.hash === '#CS002' && before === '#CS004');
+});
+
+await check('a paper with no explanation yet shows the provisional note and no diagram', async () => {
+  await select('CS027');
+  assert(panelEl.querySelector('.placeholder-note') && !panelEl.querySelector('img.diagram'));
+  assert(h3s().includes('Central idea'));
+});
+
+await check('every authored paper renders all sections, a diagram, and at least one link', async () => {
+  for (const id of Object.keys(app.data.explanations)) {
+    await select(id);
+    assert(panelEl.querySelector('h2').textContent.length > 3, `${id}: title`);
+    for (const s of SECTIONS) assert(h3s().includes(s), `${id}: missing "${s}"`);
+    assert(panelEl.querySelector('img.diagram'), `${id}: diagram`);
+    assert(panelEl.querySelectorAll('li.link-item').length >= 1, `${id}: links`);
+  }
+});
+
+await check('no panel, for any of the 79 papers, contains stray text such as "null" or "undefined"', async () => {
+  // Regression: empty optional parts (e.g. no rival links) used to print the literal text "null".
+  const bad = [];
+  for (const p of app.data.papers) {
+    click(node(p.id));
+    await sleep(15);
+    const loose = [...panelEl.childNodes].filter((n) => n.nodeType !== 1);
+    if (loose.length) bad.push(`${p.id}: loose text node ${JSON.stringify(loose[0].textContent)}`);
+    const m = panelEl.textContent.match(/\b(null|undefined|NaN)\b/);
+    if (m) bad.push(`${p.id}: contains "${m[0]}"`);
+  }
+  assert(bad.length === 0, `${bad.length} problem(s): ${bad.slice(0, 4).join(' | ')}`);
+});
+
+await check('every authored diagram actually loads in the browser (no broken images)', async () => {
+  for (const id of Object.keys(app.data.explanations)) {
+    await select(id);
+    const img = panelEl.querySelector('img.diagram');
+    await new Promise((r) => { if (img.complete) r(); else { img.onload = r; img.onerror = r; } });
+    assert(img.complete && img.naturalWidth > 0, `${id}: ${img.src} did not load`);
+  }
+});
+
+await check('ghost nodes: not selectable, no focus stop, tooltip explains them', async () => {
+  esc(); await sleep(200);
+  const g = node('G001');
+  click(g); await sleep(200);
+  assert(ids('sel').length === 0 && panelEl.hidden, 'ghost must not be selectable');
+  assert(!g.hasAttribute('tabindex') && !g.hasAttribute('role'), 'ghost is not a focus stop or button');
+  assert(g.querySelector('title').textContent.includes('Boole') && g.querySelector('title').textContent.includes('outside the list'));
+});
+
+await check('ghost ancestors light up when a paper is selected', async () => {
+  await select('CS004');
+  assert(node('G002').classList.contains('anc') && node('G003').classList.contains('anc'), 'G002/G003 should be ancestors');
+  assert(!node('G004').classList.contains('anc') && node('G004').classList.contains('ghost'));
+  esc(); await sleep(200);
+});
+
+await check('panel safety: hostile text is not interpreted as HTML; non-http source links are not rendered', async () => {
+  const host = d.createElement('aside'); d.body.appendChild(host);
+  const p = createPanel(host, {});
+  const evil = '<img src=x onerror="window.__pwned=1"><script>window.__pwned=2<\/script>';
+  p.show({
+    paper: { id: 'X', title: evil, authors: evil, year: 1, work_type: evil, primary_field: evil, conceptual_impact_1_3: 1,
+      practice_impact_1_3: 1, inclusion_tier: 't', source_url: 'javascript:window.__pwned=3', tags: [evil], curatorial_note: evil },
+    explanation: { problem: evil, insight: evil, analogy: evil, unlocked: evil, left_open: evil, diagram: '', diagram_alt: evil },
+    groups: { drewOn: [{ edge: { type: 'builds_on', evidence: 'explicit', why: evil }, other: { id: 'Y', title: evil, year: 2, ghost: false } }], ledTo: [], rivals: [] },
+  });
+  await sleep(300);
+  assert(!host.querySelector('img') && !host.querySelector('script'), 'markup must stay text');
+  assert(!host.querySelector('a'), 'javascript: link must not be rendered');
+  assert(!w.__pwned, 'injected code ran: ' + w.__pwned);
+  assert(host.textContent.includes('<img src=x'), 'text should be shown literally');
+  host.remove();
+});
+
+await check('a missing diagram falls back to a message instead of a broken image', async () => {
+  const host = d.createElement('aside'); d.body.appendChild(host);
+  const p = createPanel(host, {});
+  p.show({ paper: { id: 'X', title: 't', authors: 'a', year: 1, work_type: 'w', primary_field: 'f', conceptual_impact_1_3: 1, practice_impact_1_3: 1, inclusion_tier: 't' },
+    explanation: { problem: 'p', insight: 'i', analogy: 'a', unlocked: 'u', left_open: 'l', diagram: 'diagrams/does-not-exist.svg', diagram_alt: 'x' },
+    groups: { drewOn: [], ledTo: [], rivals: [] } });
+  await sleep(600);
+  assert(host.querySelector('.diagram-missing') && !host.querySelector('img.diagram'), 'fallback not shown');
+  host.remove();
+});
+
+await mount('#CS048');
+await check('deep link #CS048 selects Backpropagation, opens panel, shows lineage', async () => {
+  assert(ids('sel').join() === 'CS048', 'sel ' + ids('sel'));
+  assert(panelEl.querySelector('h2').textContent.includes('Back-Propagating'));
+  const ex = expected('CS048');
+  assert(ids('anc').join() === ex.anc && ids('desc').join() === ex.desc && ex.desc.includes('CS068'), `anc=${ids('anc')} desc=${ids('desc')}`);
+});
+
+await mount('#CS079');
+await check('far-right deep link #CS079: node is brought fully into the narrowed stage', async () => {
+  const n = node('CS079').getBoundingClientRect();
+  const s = d.querySelector('.stage').getBoundingClientRect();
+  assert(n.left >= s.left && n.right <= s.right && n.top >= s.top && n.bottom <= s.bottom,
+    `node ${Math.round(n.left)}-${Math.round(n.right)} x ${Math.round(n.top)}-${Math.round(n.bottom)} vs stage ${Math.round(s.left)}-${Math.round(s.right)} x ${Math.round(s.top)}-${Math.round(s.bottom)}`);
+});
+
+await check('closing the panel widens the stage and keeps the view inside the world', async () => {
+  click(panelEl.querySelector('.panel-close')); await sleep(600);
+  const [tx, ty] = transOf();
+  const k = scaleOf();
+  const s = d.querySelector('.stage').getBoundingClientRect();
+  assert(tx <= 0 || k * 1 > 0, 'sane');
+  const worldW = d.querySelector('.world .bg').getBBox().width * k;
+  assert(tx + worldW >= s.width - 1 || worldW <= s.width, `blank space on right: tx=${tx} worldW=${worldW} stage=${s.width}`);
+});
+
+await mount('#nope');
+await check('invalid deep link is ignored: nothing selected, no error', async () => {
+  assert(ids('sel').length === 0 && panelEl.hidden && errorEl.hidden);
+});
+
+await mount('#%E0%A4%A');
+await check('malformed percent-encoding in the hash does not crash', async () => {
+  assert(app && ids('sel').length === 0 && errorEl.hidden);
+});
+
+/* ---------- data error handling (uses the real loader against a missing/garbled file) ---------- */
+await check('destroy() removes listeners: Escape no longer reaches a destroyed app', async () => {
+  const a = await mount('#CS004');
+  assert(ids('sel').length === 1);
+  a.destroy();
+  const before = ids('sel').join();
+  esc(); await sleep(200);
+  assert(ids('sel').join() === before, 'destroyed graph still reacted to Escape');
+});
+
+/* ---------- the real index.html: theme toggle (loaded in an iframe; no animations involved) ---------- */
+{
+  const loadIndex = async () => {
+    const f = d.createElement('iframe');
+    f.style.cssText = 'position:fixed;left:-3000px;top:0;width:1300px;height:800px';
+    d.body.appendChild(f);
+    await new Promise((r) => { f.onload = r; f.src = '../index.html'; });
+    await sleep(700);
+    return f;
+  };
+  const saved = (() => { try { return localStorage.getItem('cs-theme'); } catch { return null; } })();
+  const reset = () => { try { saved === null ? localStorage.removeItem('cs-theme') : localStorage.setItem('cs-theme', saved); } catch { /* ignore */ } };
+  const surfaceOf = (f) => getComputedStyle(f.contentDocument.querySelector('.canvas')).backgroundColor;
+  const strokeOf = (f, sel) => getComputedStyle(f.contentDocument.querySelector(sel)).stroke;
+
+  await check('index.html: theme toggle exists, flips light/dark, and the dark palette is really applied', async () => {
+    localStorage.removeItem('cs-theme');
+    const f = await loadIndex();
+    try {
+      const doc = f.contentDocument, btn = doc.getElementById('theme-toggle');
+      assert(btn && btn.getAttribute('aria-label')?.startsWith('Switch to '), 'toggle button');
+      const start = doc.documentElement.dataset.theme;
+      assert(start === 'light' || start === 'dark', 'a theme is set on load: ' + start);
+      if (start === 'dark') btn.click(); // normalise to light
+      await sleep(100);
+      assert(doc.documentElement.dataset.theme === 'light' && surfaceOf(f) === 'rgb(255, 255, 255)', 'light surface ' + surfaceOf(f));
+      const lightBuilds = strokeOf(f, '.edge-builds_on');
+      btn.click(); await sleep(100);
+      assert(doc.documentElement.dataset.theme === 'dark', 'now dark');
+      assert(surfaceOf(f) === 'rgb(30, 32, 36)', 'dark surface ' + surfaceOf(f));
+      assert(getComputedStyle(doc.body).backgroundColor === 'rgb(22, 23, 26)', 'dark page background');
+      assert(strokeOf(f, '.edge-builds_on') !== lightBuilds, 'edge colours change with the theme');
+      assert(strokeOf(f, '.sw-builds_on') === strokeOf(f, '.edge-builds_on'), 'legend swatch matches the graph edge colour');
+      assert(localStorage.getItem('cs-theme') === 'dark', 'choice saved');
+      assert(doc.getElementById('error').hidden, 'no error banner');
+    } finally { f.remove(); }
+  });
+
+  await check('index.html: the saved theme is applied on reload, before the app finishes loading', async () => {
+    localStorage.setItem('cs-theme', 'dark');
+    const f = await loadIndex();
+    try {
+      assert(f.contentDocument.documentElement.dataset.theme === 'dark', 'dark restored');
+      assert(f.contentDocument.getElementById('theme-toggle').getAttribute('aria-label') === 'Switch to light theme');
+      f.contentDocument.getElementById('theme-toggle').click();
+      await sleep(100);
+      assert(localStorage.getItem('cs-theme') === 'light' && f.contentDocument.documentElement.dataset.theme === 'light');
+    } finally { f.remove(); }
+  });
+
+  await check('index.html: a junk saved value is ignored, not applied', async () => {
+    localStorage.setItem('cs-theme', '"><script>alert(1)<\/script>'); // escaped so it does not end this HTML script block
+    const f = await loadIndex();
+    try {
+      const t = f.contentDocument.documentElement.dataset.theme;
+      assert(t === 'light' || t === 'dark', 'fell back to a valid theme: ' + t);
+    } finally { f.remove(); }
+  });
+  reset();
+}
+
+const failed = results.filter((r) => !r.ok);
+const esc2 = (s) => String(s).replace(/</g, '&lt;');
+const report = d.getElementById('report');
+report.innerHTML =
+  `<b id="summary">${results.length - failed.length}/${results.length} passed${failed.length ? ' - ' + failed.length + ' FAILED' : ''}</b>\n` +
+  results.map((r) => `<li class="${r.ok ? 'pass' : 'fail'}">${r.ok ? 'PASS' : 'FAIL'}: ${esc2(r.name)}${r.ok ? '' : ' - ' + esc2(r.msg)}</li>`).join('\n');
+d.title = failed.length ? 'FAILED' : 'ALL PASSED';
+  </script>
+</body>
+</html>

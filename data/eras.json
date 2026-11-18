@@ -1,0 +1,23 @@
+[
+ { "id": "E1", "label": "Foundations", "start": 1910, "end": 1939,
+   "question": "What can be proved, and what can be computed?",
+   "summary": "Logic and mathematics try to say what a mechanical procedure is, and discover its limits." },
+ { "id": "E2", "label": "Machines and minds", "start": 1940, "end": 1961,
+   "question": "Can machines be built, programmed, and made to think?",
+   "summary": "Computation becomes hardware, information gets a theory, and programming languages and AI appear." },
+ { "id": "E3", "label": "Discipline and efficiency", "start": 1962, "end": 1969,
+   "question": "How do we make computing efficient, shared, and disciplined?",
+   "summary": "Algorithms get analysed, systems get layered, and programming starts to be treated as engineering." },
+ { "id": "E4", "label": "Data, structure, trust", "start": 1970, "end": 1979,
+   "question": "How do we organise data, structure software, and secure it?",
+   "summary": "Relational data, NP-completeness, public-key cryptography, UNIX, C and the first internetworking protocols." },
+ { "id": "E5", "label": "Cooperation and abstraction", "start": 1980, "end": 1994,
+   "question": "How do machines cooperate, and how do we manage abstraction?",
+   "summary": "Distributed consensus, end-to-end design, quantitative architecture, design patterns and the idea of the Web." },
+ { "id": "E6", "label": "Web scale", "start": 1995, "end": 2008,
+   "question": "How do we scale to the web and the planet, and build software faster?",
+   "summary": "Web search, warehouse-scale storage and computation, agile methods, privacy and decentralised money." },
+ { "id": "E7", "label": "Learning at scale", "start": 2009, "end": 2023,
+   "question": "Can machines learn at scale, and now write code?",
+   "summary": "Deep learning, transformers, large language models, and the evaluation of machines that program." }
+]

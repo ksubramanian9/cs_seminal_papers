@@ -1,0 +1,313 @@
+/*
+ * Theme tokens. Light is the default; the dark set applies when <html data-theme="dark">.
+ * js/theme.js (and a tiny inline script in index.html, to avoid a flash) sets data-theme from
+ * the saved choice, else the operating system's preference. Provisional palette: to be
+ * confirmed at the M1 review.
+ */
+:root {
+  color-scheme: light;
+  --bg: #fafaf8;
+  --surface: #ffffff;
+  --text: #1c1c1e;
+  --text-soft: #34343a;
+  --muted: #5b5b61;
+  --border: #d9d9d4;
+  --hover: #f0f0ec;
+  --hover-link: #f2f4fb;
+  --band-a: rgba(60, 60, 80, 0.045);
+  --band-b: rgba(60, 60, 80, 0);
+  --stripe-a: rgba(0, 0, 0, 0.025);
+  --grid: rgba(0, 0, 0, 0.09);
+  --grid-break: rgba(0, 0, 0, 0.25);
+  --tick: #888;
+  --danger-bg: #fdecea;
+  --danger-text: #8a1c14;
+
+  /* selection highlight */
+  --sel: #111111;
+  --anc: #1d4ed8;
+  --desc: #c2410c;
+  --rival: #c77700;
+  --node-stroke: #ffffff;
+
+  /* ghost (outside-influence) nodes */
+  --ghost-fill: #e5e7eb;
+  --ghost-stroke: #6b7280;
+
+  /* evidence badges */
+  --ok-bg: #eaf4ec;      --ok-border: #9cc5a4;   --ok-text: #1d5a2b;
+  --warn-bg: #fbf3e2;    --warn-border: #dcc189; --warn-text: #7a5410;
+
+  /* link (edge) colours; the legend and the graph both use these */
+  --e-builds: #6b7280;
+  --e-generalizes: #7c3aed;
+  --e-overcomes: #d1242f;
+  --e-new-domain: #0d8a7f;
+  --e-rival: #c77700;
+
+  --panel-width: 420px;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #16171a;
+  --surface: #1e2024;
+  --text: #e8e8ea;
+  --text-soft: #c9c9cf;
+  --muted: #a3a3ac;
+  --border: #3a3c43;
+  --hover: #2a2d34;
+  --hover-link: #262b3a;
+  --band-a: rgba(255, 255, 255, 0.05);
+  --band-b: rgba(255, 255, 255, 0);
+  --stripe-a: rgba(255, 255, 255, 0.03);
+  --grid: rgba(255, 255, 255, 0.10);
+  --grid-break: rgba(255, 255, 255, 0.30);
+  --tick: #8b8b94;
+  --danger-bg: #3a1d1b;
+  --danger-text: #ffb4ab;
+
+  --sel: #f5f5f5;
+  --anc: #7aa2ff;
+  --desc: #ff9a63;
+  --rival: #f0b034;
+  --node-stroke: #1e2024;
+
+  --ghost-fill: #3a3d44;
+  --ghost-stroke: #9ca3af;
+
+  --ok-bg: #1d3324;      --ok-border: #3f7a52;   --ok-text: #8fd6a3;
+  --warn-bg: #3a2f17;    --warn-border: #8a6d2b; --warn-text: #e6c36e;
+
+  --e-builds: #9aa3b2;
+  --e-generalizes: #a78bfa;
+  --e-overcomes: #ff6b6b;
+  --e-new-domain: #2dd4bf;
+  --e-rival: #f0b034;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 1rem;
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: 0.5rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.app-header h1 { margin: 0; font-size: 1.1rem; }
+.howto { margin: 0; color: var(--muted); font-size: 0.8rem; }
+
+/* ---------- theme toggle ---------- */
+.theme-toggle {
+  flex: none;
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  height: 32px; padding: 0 0.7rem;
+  font: 600 0.8rem var(--font);
+  color: var(--text); background: var(--surface);
+  border: 1px solid var(--border); border-radius: 999px; cursor: pointer;
+}
+.theme-toggle:hover { background: var(--hover); }
+.theme-toggle:focus-visible { outline: 2px solid var(--anc); outline-offset: 2px; }
+.theme-toggle .theme-icon { font-size: 1rem; line-height: 1; }
+
+.error {
+  margin: 0;
+  padding: 0.75rem 1.25rem;
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  border-bottom: 1px solid var(--danger-text);
+  font-weight: 600;
+}
+.error[hidden] { display: none; }
+
+.app-main { flex: 1; min-height: 0; display: flex; }
+
+/* ---------- canvas column ---------- */
+.canvas {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+}
+.era-header { flex: none; display: block; width: 100%; border-bottom: 1px solid var(--border); }
+.stage { flex: 1; min-height: 0; position: relative; overflow: hidden; }
+.main-svg { display: block; position: absolute; inset: 0; cursor: grab; user-select: none; }
+.main-svg:active { cursor: grabbing; }
+.axis { flex: none; display: block; width: 100%; border-top: 1px solid var(--border); }
+
+.era-band.odd { fill: var(--band-a); }
+.era-band.even { fill: var(--band-b); }
+.lane-stripe.odd { fill: var(--stripe-a); }
+.lane-stripe.even { fill: transparent; }
+.gridline { stroke: var(--grid); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.gridline.break { stroke-dasharray: 4 4; stroke: var(--grid-break); }
+
+.era-title { font: 600 12px var(--font); fill: var(--text); }
+.era-q { font: 11px var(--font); fill: var(--muted); }
+.era-divider { stroke: var(--border); }
+.tick { stroke: var(--tick); }
+.tick-label { font: 11px var(--font); fill: var(--muted); }
+.axis-break { stroke: var(--muted); fill: none; stroke-width: 1.5; }
+
+.lane-label {
+  font: 600 11px var(--font);
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+/* Lane colours are tuned for a light background; lift them a little on dark. */
+:root[data-theme="dark"] .lane-label { filter: brightness(1.55) saturate(0.95); }
+
+/* ---------- nodes and edges ---------- */
+.node { cursor: pointer; outline: none; }
+.node circle { stroke: var(--node-stroke); stroke-width: 1.5; transition: opacity 0.15s; }
+.node .label {
+  font: 11px var(--font);
+  fill: var(--text);
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+.node:hover circle { stroke: var(--sel); }
+.node:focus-visible circle { stroke: var(--sel); stroke-width: 3; stroke-dasharray: 3 2; }
+.main-svg.zoomed-out .node .label { display: none; }
+
+.node.sel circle { stroke: var(--sel); stroke-width: 4; }
+.node.anc circle { stroke: var(--anc); stroke-width: 3.5; }
+.node.desc circle { stroke: var(--desc); stroke-width: 3.5; }
+.node.rival circle { stroke: var(--rival); stroke-width: 3; stroke-dasharray: 3 2; }
+.node.sel .label { font-weight: 700; }
+
+.edge { transition: opacity 0.15s; pointer-events: none; }
+.has-sel .node:not(.on) { opacity: 0.16; }
+.has-sel .edge:not(.on) { opacity: 0.07; }
+.has-sel .edge.on { stroke-opacity: 1; }
+
+/* Edge and arrowhead colours come from the theme (these override the SVG attributes in graph.js/legend.js). */
+.edge-builds_on, .sw-builds_on { stroke: var(--e-builds); }
+.edge-generalizes, .sw-generalizes { stroke: var(--e-generalizes); }
+.edge-overcomes_limit, .sw-overcomes_limit { stroke: var(--e-overcomes); }
+.edge-new_domain, .sw-new_domain { stroke: var(--e-new-domain); }
+.edge-rival, .sw-rival { stroke: var(--e-rival); }
+.mk-builds_on { fill: var(--e-builds); }
+.mk-generalizes { fill: var(--e-generalizes); }
+.mk-overcomes_limit { fill: var(--e-overcomes); }
+.mk-new_domain { fill: var(--e-new-domain); }
+.mk-rival { fill: var(--e-rival); }
+
+/* ---------- zoom controls ---------- */
+.zoom-controls { position: absolute; right: 10px; top: 10px; display: flex; gap: 4px; }
+.zoom-controls button {
+  min-width: 34px; height: 30px; padding: 0 8px;
+  font: 600 14px var(--font);
+  background: var(--surface); color: var(--text);
+  border: 1px solid var(--border); border-radius: 6px; cursor: pointer;
+}
+.zoom-controls button:hover { background: var(--hover); }
+
+/* ---------- legend strip ---------- */
+.legend-slot {
+  flex: none;
+  display: flex; flex-wrap: wrap; gap: 0.25rem 1.5rem;
+  padding: 0.3rem 0.9rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.72rem; color: var(--muted);
+  background: var(--bg);
+}
+.legend-group { display: flex; align-items: center; gap: 0.2rem 0.5rem; flex-wrap: wrap; }
+.legend-group strong { color: var(--text); font-weight: 600; margin-right: 0.15rem; }
+.legend-item { display: inline-flex; align-items: center; gap: 2px; white-space: nowrap; }
+.sw-ring-selected { stroke: var(--sel); }
+.sw-ring-ancestor { stroke: var(--anc); }
+.sw-ring-descendant { stroke: var(--desc); }
+.sw-ghost { fill: var(--ghost-fill); stroke: var(--ghost-stroke); }
+.sw-ring-selected, .sw-ring-ancestor, .sw-ring-descendant { fill: var(--surface); }
+
+/* ---------- detail panel ---------- */
+.panel {
+  width: var(--panel-width);
+  flex: none;
+  overflow-y: auto;
+  border-left: 1px solid var(--border);
+  background: var(--surface);
+  padding: 1rem 1.25rem 2rem;
+  position: relative;
+}
+.panel[hidden] { display: none; }
+.panel h2 { margin: 0 2rem 0.25rem 0; font-size: 1.15rem; line-height: 1.3; }
+.panel h3 { margin: 1rem 0 0.2rem; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+.panel p { margin: 0.2rem 0; font-size: 0.92rem; }
+.panel-meta { color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 0.3rem; margin: 0.5rem 0; }
+.chip { font-size: 0.72rem; padding: 0.1rem 0.5rem; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); }
+.placeholder-note { margin-top: 1rem; padding: 0.6rem 0.75rem; background: var(--bg); border: 1px dashed var(--border); border-radius: 6px; color: var(--muted); font-size: 0.8rem; }
+.panel a { color: var(--anc); }
+.panel-close {
+  position: absolute; top: 0.6rem; right: 0.7rem;
+  width: 28px; height: 28px; border: 1px solid var(--border); border-radius: 6px;
+  background: var(--surface); color: var(--text); font-size: 1.1rem; line-height: 1; cursor: pointer;
+}
+.panel-close:hover { background: var(--hover); }
+
+/* ---------- ghost nodes (outside influences) ---------- */
+.node.ghost { cursor: help; }
+.node.ghost circle { fill: var(--ghost-fill); stroke: var(--ghost-stroke); stroke-width: 1.5; stroke-dasharray: 3 2; }
+.node.ghost .label { fill: var(--muted); font-style: italic; }
+.node.ghost:hover circle { stroke: var(--sel); }
+
+/* ---------- panel: explanation, figure, links ---------- */
+.panel .source { margin: 0.35rem 0 0; font-size: 0.85rem; }
+.panel .one-line { margin: 0.75rem 0 0; font-size: 1rem; font-weight: 600; line-height: 1.4; }
+.panel-section p { line-height: 1.6; }
+.panel-section.analogy { margin-top: 0.75rem; padding: 0.55rem 0.8rem; background: var(--bg); border-left: 3px solid var(--border); border-radius: 0 6px 6px 0; }
+.panel-section.analogy h3 { margin-top: 0; }
+.panel-section.analogy p { font-style: italic; color: var(--text-soft); }
+.figure { margin: 1rem 0 0; }
+/* Diagrams are drawn for a light background, so they stay on a white card in either theme. */
+.diagram { display: block; width: 100%; height: auto; border: 1px solid var(--border); border-radius: 8px; background: #fff; }
+.diagram-missing { color: var(--muted); font-style: italic; }
+
+.link-list { list-style: none; margin: 0.25rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.link-item { border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.link-body {
+  display: flex; flex-direction: column; gap: 0.2rem; width: 100%; padding: 0.55rem 0.7rem;
+  text-align: left; font: inherit; color: inherit; background: none; border: 0; border-radius: 8px;
+}
+button.link-body { cursor: pointer; }
+button.link-body:hover, button.link-body:focus-visible { background: var(--hover-link); outline: 2px solid var(--anc); outline-offset: -2px; }
+.link-item.ghost { background: var(--bg); border-style: dashed; }
+.link-title { font-weight: 600; font-size: 0.9rem; }
+.link-year { color: var(--muted); font-size: 0.8rem; font-weight: 400; }
+.link-title + .link-year { margin-top: -0.2rem; }
+.link-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-top: 0.1rem; }
+.link-type { font-size: 0.75rem; padding-left: 0.45rem; border-left: 4px solid var(--muted); color: var(--text-soft); }
+.link-type.t-builds_on { border-left-color: var(--e-builds); }
+.link-type.t-generalizes { border-left-color: var(--e-generalizes); }
+.link-type.t-overcomes_limit { border-left-color: var(--e-overcomes); }
+.link-type.t-new_domain { border-left-color: var(--e-new-domain); }
+.link-type.t-rival { border-left-color: var(--e-rival); }
+.badge { font-size: 0.68rem; padding: 0.05rem 0.45rem; border-radius: 999px; border: 1px solid var(--border); text-transform: uppercase; letter-spacing: 0.03em; }
+.badge.ev-explicit { background: var(--ok-bg); border-color: var(--ok-border); color: var(--ok-text); }
+.badge.ev-interpretive { background: var(--warn-bg); border-color: var(--warn-border); color: var(--warn-text); }
+.link-why { font-size: 0.85rem; line-height: 1.45; color: var(--text-soft); }
+.link-blurb { margin: 0; padding: 0 0.7rem 0.6rem; font-size: 0.78rem; color: var(--muted); }
+.metadata .curator { font-size: 0.8rem; color: var(--muted); }
+.chip.tag { background: var(--bg); }

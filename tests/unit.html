@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Unit tests</title>
+  <style>
+    body { font: 14px/1.5 system-ui, sans-serif; margin: 1.5rem; }
+    .pass { color: #1a7f37; } .fail { color: #b3261e; font-weight: 600; }
+    #summary { font-weight: 700; margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Unit tests: layout and traversal</h1>
+  <div id="summary">Running…</div>
+  <ul id="results"></ul>
+<script type="module">
+import { makeXScale, stackNodes, computeLayout, radiusFor, ROW_H, X_SEGMENTS } from '../js/layout.js';
+import { validateData, wordCount, requiredFiles } from '../js/validate.js';
+import { resolveTheme, createThemeToggle, safeStorage } from '../js/theme.js';
+import { buildIndex, ancestors, descendants, rivals } from '../js/traverse.js';
+
+const results = [];
+function test(name, fn) {
+  try { fn(); results.push({ name, ok: true }); }
+  catch (e) { results.push({ name, ok: false, msg: e.message }); }
+}
+function assert(cond, msg) { if (!cond) throw new Error(msg || 'assertion failed'); }
+const setEq = (s, arr) => s.size === arr.length && arr.every((x) => s.has(x));
+
+/* ---------- makeXScale ---------- */
+const SEGS = [{ from: 1908, to: 1930, px: 100 }, { from: 1930, to: 2030, px: 2000 }];
+test('xScale: origin and end', () => {
+  const x = makeXScale(SEGS, 130);
+  assert(x(1908) === 130 && x(2030) === 2230 && x.end === 2230 && x.width === 2100);
+});
+test('xScale: continuous at the segment boundary', () => {
+  const x = makeXScale(SEGS, 0);
+  assert(Math.abs(x(1930) - 100) < 1e-9);
+  assert(Math.abs(x(1930.0001) - x(1930)) < 0.01);
+});
+test('xScale: strictly increasing, compressed before 1930', () => {
+  const x = makeXScale(SEGS, 0);
+  for (let y = 1909; y <= 2030; y++) assert(x(y) > x(y - 1), `not increasing at ${y}`);
+  assert(x(1930) - x(1920) < x(1940) - x(1930), 'early segment should be compressed');
+});
+test('xScale: clamps outside domain', () => {
+  const x = makeXScale(SEGS, 0);
+  assert(x(1800) === 0 && x(2100) === 2100);
+});
+test('xScale: rejects gaps and empty input', () => {
+  let threw = 0;
+  try { makeXScale([]); } catch { threw++; }
+  try { makeXScale([{ from: 0, to: 10, px: 10 }, { from: 11, to: 20, px: 10 }]); } catch { threw++; }
+  assert(threw === 2);
+});
+
+/* ---------- stackNodes ---------- */
+const N = (id, x, w = 50, r = 6) => ({ id, x, r, labelW: w });
+test('stack: far-apart nodes share row 0', () => {
+  const { rowOf, rows } = stackNodes([N('a', 0), N('b', 500)]);
+  assert(rows === 1 && rowOf.get('a') === 0 && rowOf.get('b') === 0);
+});
+test('stack: colliding labels go to separate rows', () => {
+  const { rowOf, rows } = stackNodes([N('a', 0), N('b', 20), N('c', 40)]);
+  assert(rows === 3 && new Set([...rowOf.values()]).size === 3);
+});
+test('stack: reuses a freed row', () => {
+  const { rowOf, rows } = stackNodes([N('a', 0), N('b', 20), N('c', 400)]);
+  assert(rows === 2 && rowOf.get('c') === 0);
+});
+test('stack: deterministic regardless of input order', () => {
+  const nodes = [N('a', 0), N('b', 0), N('c', 20), N('d', 25)];
+  const r1 = stackNodes(nodes).rowOf, r2 = stackNodes([...nodes].reverse()).rowOf;
+  assert(nodes.every((n) => r1.get(n.id) === r2.get(n.id)));
+});
+test('stack: same-x nodes never share a row', () => {
+  const { rowOf } = stackNodes([N('a', 100), N('b', 100)]);
+  assert(rowOf.get('a') !== rowOf.get('b'));
+});
+
+/* ---------- computeLayout ---------- */
+test('layout: unknown lane is an error', () => {
+  let threw = false;
+  try {
+    computeLayout({ nodes: [{ id: 'x', year: 1950, lane: 'nope', label: 'x', impact: 2 }],
+      lanes: [{ id: 'a', label: 'A', color: '#000' }], xScale: makeXScale(SEGS) });
+  } catch { threw = true; }
+  assert(threw);
+});
+test('layout: lanes tile the height without gaps', () => {
+  const lanes = [{ id: 'a' }, { id: 'b' }];
+  const L = computeLayout({
+    nodes: [{ id: '1', year: 1950, lane: 'a', label: 'aaaa', impact: 3 }, { id: '2', year: 1950, lane: 'a', label: 'bbbb', impact: 3 }],
+    lanes, xScale: makeXScale(SEGS),
+  });
+  assert(L.lanes[0].y0 === 0 && L.lanes[1].y0 === L.lanes[0].h && L.height === L.lanes[0].h + L.lanes[1].h);
+  assert(L.lanes[0].rows === 2 && L.lanes[1].rows === 1);
+  const ys = L.nodes.map((n) => n.y);
+  assert(Math.abs(ys[0] - ys[1]) === ROW_H, 'stacked nodes are one row apart');
+});
+test('layout: radius grows with impact', () => assert(radiusFor(3) > radiusFor(2)));
+
+/* ---------- traverse ---------- */
+// a -> b -> d ; a -> c -> d ; d -> e ; x -> y (separate) ; b ~rival~ c
+const EDGES = [
+  { from: 'a', to: 'b', type: 'builds_on' }, { from: 'b', to: 'd', type: 'builds_on' },
+  { from: 'a', to: 'c', type: 'builds_on' }, { from: 'c', to: 'd', type: 'generalizes' },
+  { from: 'd', to: 'e', type: 'new_domain' }, { from: 'x', to: 'y', type: 'builds_on' },
+  { from: 'b', to: 'c', type: 'rival' },
+];
+test('traverse: ancestors (diamond)', () => {
+  const ix = buildIndex(EDGES);
+  assert(setEq(ancestors(ix, 'd'), ['a', 'b', 'c']));
+  assert(setEq(ancestors(ix, 'a'), []));
+});
+test('traverse: descendants (diamond)', () => {
+  const ix = buildIndex(EDGES);
+  assert(setEq(descendants(ix, 'a'), ['b', 'c', 'd', 'e']));
+  assert(setEq(descendants(ix, 'e'), []));
+});
+test('traverse: unrelated components stay separate', () => {
+  const ix = buildIndex(EDGES);
+  assert(setEq(descendants(ix, 'x'), ['y']) && setEq(ancestors(ix, 'e'), ['a', 'b', 'c', 'd']));
+});
+test('traverse: rival edges excluded from lineage by default', () => {
+  const ix = buildIndex(EDGES);
+  assert(!ancestors(ix, 'c').has('b'));
+  const ixR = buildIndex(EDGES, { includeRival: true });
+  assert(ancestors(ixR, 'c').has('b'));
+});
+test('traverse: rivals() finds direct rival neighbours both ways', () => {
+  assert(setEq(rivals(EDGES, 'b'), ['c']) && setEq(rivals(EDGES, 'c'), ['b']) && rivals(EDGES, 'a').size === 0);
+});
+test('traverse: cycle does not hang and excludes the start node', () => {
+  const ix = buildIndex([{ from: 'p', to: 'q', type: 'builds_on' }, { from: 'q', to: 'p', type: 'builds_on' }]);
+  assert(setEq(ancestors(ix, 'p'), ['q']) && setEq(descendants(ix, 'p'), ['q']));
+});
+test('traverse: unknown id gives empty sets', () => {
+  const ix = buildIndex(EDGES);
+  assert(ancestors(ix, 'zzz').size === 0 && descendants(ix, 'zzz').size === 0);
+});
+
+/* ---------- theme ---------- */
+const fakeMedia = (matches) => {
+  const m = { matches, listeners: new Set(),
+    addEventListener(_, fn) { m.listeners.add(fn); }, removeEventListener(_, fn) { m.listeners.delete(fn); },
+    set(v) { m.matches = v; [...m.listeners].forEach((fn) => fn({ matches: v })); } };
+  return m;
+};
+const fakeStorage = (initial = null) => { const s = { v: initial, get: () => s.v, set: (x) => { s.v = x; } }; return s; };
+const mkToggle = ({ stored = null, dark = false } = {}) => {
+  const root = document.createElement('div'), button = document.createElement('button');
+  const storage = fakeStorage(stored), media = fakeMedia(dark);
+  const t = createThemeToggle(button, { root, storage, media });
+  return { root, button, storage, media, t };
+};
+
+test('theme: resolveTheme prefers a valid saved choice, then the OS, ignoring junk', () => {
+  assert(resolveTheme({ stored: 'dark', prefersDark: false }) === 'dark');
+  assert(resolveTheme({ stored: 'light', prefersDark: true }) === 'light');
+  assert(resolveTheme({ stored: null, prefersDark: true }) === 'dark');
+  assert(resolveTheme({ stored: null, prefersDark: false }) === 'light');
+  assert(resolveTheme({ stored: 'purple', prefersDark: true }) === 'dark', 'junk falls back to the OS');
+  assert(resolveTheme({ stored: undefined, prefersDark: false }) === 'light');
+});
+test('theme: starts from the OS preference when nothing is saved', () => {
+  assert(mkToggle({ dark: true }).root.dataset.theme === 'dark');
+  assert(mkToggle({ dark: false }).root.dataset.theme === 'light');
+});
+test('theme: a saved choice beats the OS preference', () => {
+  assert(mkToggle({ stored: 'light', dark: true }).root.dataset.theme === 'light');
+  assert(mkToggle({ stored: 'dark', dark: false }).root.dataset.theme === 'dark');
+});
+test('theme: clicking flips the theme, saves it, and relabels the button to the theme you would get next', () => {
+  const { root, button, storage } = mkToggle();
+  assert(root.dataset.theme === 'light' && button.getAttribute('aria-label') === 'Switch to dark theme' && button.textContent.includes('Dark'));
+  button.click();
+  assert(root.dataset.theme === 'dark' && storage.v === 'dark', 'now dark and saved');
+  assert(button.getAttribute('aria-label') === 'Switch to light theme' && button.textContent.includes('Light'));
+  button.click();
+  assert(root.dataset.theme === 'light' && storage.v === 'light');
+  assert(button.querySelectorAll('.theme-icon').length === 1, 'icon is replaced, not duplicated');
+});
+test('theme: follows live OS changes only while the user has not chosen', () => {
+  const a = mkToggle({ dark: false }); a.media.set(true);
+  assert(a.root.dataset.theme === 'dark', 'follows OS when unsaved');
+  const b = mkToggle({ stored: 'light', dark: false }); b.media.set(true);
+  assert(b.root.dataset.theme === 'light', 'ignores OS once the user chose');
+  const c = mkToggle({ dark: false }); c.button.click(); c.media.set(false);
+  assert(c.root.dataset.theme === 'dark', 'a click counts as a choice');
+});
+test('theme: destroy() removes the click and OS listeners', () => {
+  const { root, button, media, t } = mkToggle();
+  t.destroy();
+  button.click(); media.set(true);
+  assert(root.dataset.theme === 'light' && media.listeners.size === 0);
+});
+test('theme: safeStorage never throws even if localStorage access is blocked', () => {
+  const original = Object.getOwnPropertyDescriptor(window, 'localStorage'); // restore exactly this afterwards
+  Object.defineProperty(window, 'localStorage', { configurable: true, get() { throw new Error('blocked'); } });
+  try {
+    const s = safeStorage();
+    assert(s.get() === null);
+    s.set('dark'); // must not throw
+  } finally { Object.defineProperty(window, 'localStorage', original); }
+  assert(typeof localStorage === 'object', 'localStorage restored');
+});
+
+/* ---------- validator ---------- */
+const GOOD_EXPL = () => ({
+  problem: 'word '.repeat(80).trim(), insight: 'word '.repeat(100).trim(), analogy: 'word '.repeat(40).trim(),
+  unlocked: 'word '.repeat(80).trim(), left_open: 'word '.repeat(60).trim(), diagram: 'diagrams/A.svg', diagram_alt: 'alt',
+});
+const baseData = () => ({
+  papers: [{ id: 'A', year: 1936, primary_field: 'L' }, { id: 'B', year: 1950, primary_field: 'L' }],
+  ghosts: [{ id: 'G1', year: 1900, lane: 'L' }],
+  lanes: [{ id: 'L' }], eras: [{ id: 'E', start: 1800, end: 2100 }],
+  edges: [{ id: 'E1', from: 'A', to: 'B', type: 'builds_on', evidence: 'explicit', why: 'A short reason.' },
+          { id: 'E2', from: 'G1', to: 'A', type: 'builds_on', evidence: 'interpretive', why: 'Another reason.' }],
+  explanations: { A: GOOD_EXPL() },
+});
+const statusOf = (res, id) => res.find((r) => r.id === id).status;
+const problemsOf = (res, id) => res.find((r) => r.id === id).problems.join(' | ');
+
+test('validate: good data passes every rule (scoped)', () => {
+  const res = validateData(baseData());
+  assert(res.every((r) => r.status !== 'fail'), res.filter((r) => r.status === 'fail').map((r) => r.id + ': ' + r.problems).join('; '));
+});
+test('validate: strict mode requires every paper to be authored', () => {
+  assert(statusOf(validateData(baseData()), 'R1') === 'warn');
+  assert(statusOf(validateData(baseData(), { strict: true }), 'R1') === 'fail');
+});
+test('validate: R2 catches a missing section, a too-short entry and a missing diagram', () => {
+  const d = baseData(); delete d.explanations.A.analogy; d.explanations.A.diagram = '';
+  const res = validateData(d);
+  assert(statusOf(res, 'R2') === 'fail' && /missing section/.test(problemsOf(res, 'R2')) && /no diagram/.test(problemsOf(res, 'R2')));
+  const d2 = baseData(); d2.explanations.A.problem = 'too short';
+  assert(/words/.test(problemsOf(validateData(d2), 'R2')));
+});
+test('validate: R2 warns (not fails) outside the 350-450 target but inside 300-500', () => {
+  const d = baseData(); d.explanations.A.problem = 'word '.repeat(40).trim(); // total 320
+  assert(statusOf(validateData(d), 'R2') === 'warn');
+});
+test('validate: R3 flags an authored paper with no edge', () => {
+  const d = baseData(); d.edges = [d.edges[1]]; d.explanations.B = GOOD_EXPL(); // B now has no edges
+  assert(statusOf(validateData(d), 'R3') === 'fail');
+});
+test('validate: R4 catches bad type, evidence, empty and overlong why, unknown endpoint, duplicate id', () => {
+  const d = baseData();
+  d.edges.push({ id: 'E3', from: 'A', to: 'B', type: 'nope', evidence: 'explicit', why: 'x' });
+  d.edges.push({ id: 'E4', from: 'A', to: 'B', type: 'builds_on', evidence: 'maybe', why: 'x' });
+  d.edges.push({ id: 'E5', from: 'A', to: 'B', type: 'builds_on', evidence: 'explicit', why: '' });
+  d.edges.push({ id: 'E6', from: 'A', to: 'B', type: 'builds_on', evidence: 'explicit', why: 'w '.repeat(41) });
+  d.edges.push({ id: 'E7', from: 'A', to: 'ZZZ', type: 'builds_on', evidence: 'explicit', why: 'x' });
+  d.edges.push({ id: 'E1', from: 'A', to: 'B', type: 'builds_on', evidence: 'explicit', why: 'x' });
+  const p = problemsOf(validateData(d), 'R4');
+  for (const needle of ['invalid type', 'invalid evidence', 'empty "why"', 'max 40', 'unknown to', 'duplicate edge id']) assert(p.includes(needle), 'missing: ' + needle);
+});
+test('validate: R4 treats placeholder edges as warnings, and as failures in strict mode', () => {
+  const d = baseData(); d.edges.push({ id: 'P01', from: 'A', to: 'B', type: 'builds_on', evidence: 'interpretive', why: '[placeholder] rough' });
+  assert(statusOf(validateData(d), 'R4') === 'warn' && statusOf(validateData(d, { strict: true }), 'R4') === 'fail');
+});
+test('validate: R5 rejects backwards edges but allows near-simultaneous rivals either way round', () => {
+  const d = baseData(); d.edges.push({ id: 'E3', from: 'B', to: 'A', type: 'builds_on', evidence: 'explicit', why: 'backwards' });
+  assert(statusOf(validateData(d), 'R5') === 'fail');
+  const near = baseData(); near.papers[1].year = 1937; // A 1936, B 1937
+  near.edges.push({ id: 'E3', from: 'B', to: 'A', type: 'rival', evidence: 'explicit', why: 'independent' });
+  assert(statusOf(validateData(near), 'R5') === 'pass', 'near rival backwards is allowed');
+  const far = baseData(); far.edges.push({ id: 'E3', from: 'B', to: 'A', type: 'rival', evidence: 'explicit', why: 'far apart' });
+  assert(statusOf(validateData(far), 'R5') === 'fail', 'far rival backwards is not');
+  const fwd = baseData(); fwd.edges.push({ id: 'E3', from: 'A', to: 'B', type: 'rival', evidence: 'interpretive', why: 'forward rival, years apart' });
+  assert(statusOf(validateData(fwd), 'R5') === 'pass', 'a rival that goes forward in time is fine however far apart');
+});
+test('validate: R6 rejects a ghost as an edge target', () => {
+  const d = baseData(); d.edges.push({ id: 'E3', from: 'A', to: 'G1', type: 'builds_on', evidence: 'explicit', why: 'x' });
+  assert(statusOf(validateData(d), 'R6') === 'fail');
+});
+test('validate: R8 catches duplicate ids, unknown lanes and a paper outside every era', () => {
+  const d = baseData(); d.papers.push({ id: 'A', year: 1936, primary_field: 'L' }); d.papers[1].primary_field = 'X'; d.eras = [{ id: 'E', start: 1940, end: 1960 }];
+  const p = problemsOf(validateData(d), 'R8');
+  assert(p.includes('duplicate paper id A') && p.includes('unknown lane') && p.includes('0 eras'));
+});
+test('validate: R9 detects a lineage cycle but ignores rival edges', () => {
+  const d = baseData(); d.papers[1].year = 1936;
+  d.edges.push({ id: 'E3', from: 'B', to: 'A', type: 'builds_on', evidence: 'explicit', why: 'cycle' });
+  assert(statusOf(validateData(d), 'R9') === 'fail');
+  const r = baseData(); r.papers[1].year = 1936; r.edges.push({ id: 'E3', from: 'B', to: 'A', type: 'rival', evidence: 'explicit', why: 'rival' });
+  assert(statusOf(validateData(r), 'R9') === 'pass');
+});
+test('validate: wordCount and requiredFiles', () => {
+  assert(wordCount('  a  b\nc ') === 3 && wordCount('') === 0 && wordCount(null) === 0);
+  const f = requiredFiles({ explanations: { A: { diagram: 'diagrams/A.svg', widget: { config: 'widgets/a.json' } }, B: {} } });
+  assert(f.length === 2 && f[0].path === 'diagrams/A.svg');
+});
+
+/* ---------- real data ---------- */
+async function realData() {
+  const [papers, lanes, ghosts] = await Promise.all([
+    fetch('../data/papers.json').then((r) => r.json()),
+    fetch('../data/lanes.json').then((r) => r.json()),
+    fetch('../data/ghosts.json').then((r) => r.json()),
+  ]);
+  const xScale = makeXScale(X_SEGMENTS, 130); // the same axis the app uses
+  const L = computeLayout({
+    nodes: [
+      ...papers.map((p) => ({ id: p.id, year: p.year, lane: p.primary_field, label: p.short, impact: p.conceptual_impact_1_3 })),
+      ...ghosts.map((g) => ({ id: g.id, year: g.year, lane: g.lane, label: `${g.title} (${g.year})`, impact: 2 })),
+    ],
+    lanes, xScale,
+  });
+  return { papers, ghosts, L, xScale };
+}
+let real;
+try { real = await realData(); } catch (e) { results.push({ name: 'real data: load', ok: false, msg: e.message }); }
+if (real) {
+  const { papers, ghosts, L } = real;
+  test('real: all papers and ghost nodes placed; every paper has a short label', () => {
+    assert(papers.length === 79 && L.nodes.length === papers.length + ghosts.length, `nodes=${L.nodes.length}`);
+    assert(papers.every((p) => p.short && p.short.length <= 26));
+  });
+  test('real: ghosts that predate 1908 sit left of every paper', () => {
+    const early = L.nodes.filter((n) => n.year < 1908);
+    assert(early.length >= 2 && early.every((n) => n.x < L.nodes.find((m) => m.id === 'CS001').x));
+  });
+  test('real: no label overlaps within any lane/row', () => {
+    for (const lane of L.lanes) {
+      const byRow = new Map();
+      for (const n of L.nodes.filter((n) => n.lane === lane.id)) {
+        if (!byRow.has(n.row)) byRow.set(n.row, []);
+        byRow.get(n.row).push(n);
+      }
+      for (const [row, ns] of byRow) {
+        ns.sort((a, b) => a.x - b.x);
+        for (let i = 1; i < ns.length; i++) {
+          const prevRight = ns[i - 1].x + ns[i - 1].r + 4 + ns[i - 1].labelW;
+          assert(prevRight <= ns[i].x - ns[i].r, `overlap in ${lane.id} row ${row}: ${ns[i - 1].id}/${ns[i].id}`);
+        }
+      }
+    }
+  });
+  test('real: x is non-decreasing with year across all papers', () => {
+    const s = [...L.nodes].sort((a, b) => a.year - b.year);
+    for (let i = 1; i < s.length; i++) assert(s[i].x >= s[i - 1].x);
+  });
+  test('real: every node lies inside the world bounds', () => {
+    assert(L.nodes.every((n) => n.x >= 0 && n.x + n.r + 4 + n.labelW <= L.width && n.y > 0 && n.y < L.height));
+  });
+  test('real: all 12 lanes present and total height is sensible', () => {
+    assert(L.lanes.length === 12 && L.height > 300 && L.height < 1500, `height ${L.height}`);
+  });
+}
+
+/* ---------- report ---------- */
+const failed = results.filter((r) => !r.ok);
+document.getElementById('summary').textContent =
+  `${results.length - failed.length}/${results.length} passed` + (failed.length ? ` — ${failed.length} FAILED` : '');
+document.getElementById('summary').className = failed.length ? 'fail' : 'pass';
+document.getElementById('results').innerHTML = results
+  .map((r) => `<li class="${r.ok ? 'pass' : 'fail'}">${r.ok ? 'PASS' : 'FAIL'}: ${r.name.replace(/</g, '&lt;')}${r.ok ? '' : ' — ' + String(r.msg).replace(/</g, '&lt;')}</li>`)
+  .join('');
+document.title = failed.length ? 'FAILED' : 'ALL PASSED';
+</script>
+</body>
+</html>

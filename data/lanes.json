@@ -1,0 +1,14 @@
+[
+ { "id": "Foundations and logic",               "label": "Foundations & logic",   "color": "#8e6bbf" },
+ { "id": "Information theory",                  "label": "Information theory",    "color": "#b07aa1" },
+ { "id": "Algorithms and complexity",           "label": "Algorithms & complexity","color": "#e0a030" },
+ { "id": "Programming languages and compilers", "label": "Languages & compilers", "color": "#d1603d" },
+ { "id": "Architecture and hardware",           "label": "Architecture & hardware","color": "#7f7f7f" },
+ { "id": "Operating systems and systems",       "label": "OS & systems",          "color": "#a0783c" },
+ { "id": "Software engineering",                "label": "Software engineering",  "color": "#3f8f6b" },
+ { "id": "Databases",                           "label": "Databases",             "color": "#2f7fb0" },
+ { "id": "Networks and distributed systems",    "label": "Networks & distributed","color": "#2aa6a6" },
+ { "id": "Security and privacy",                "label": "Security & privacy",    "color": "#c2476b" },
+ { "id": "HCI and web",                         "label": "HCI & web",             "color": "#6a8f2a" },
+ { "id": "AI and machine learning",             "label": "AI & machine learning", "color": "#4a5fc1" }
+]

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CS Seminal Papers Explorer</title>
+  <!-- Set the theme before first paint so the page never flashes the wrong one. Keep in sync with js/theme.js. -->
+  <script>
+    try {
+      var t = localStorage.getItem('cs-theme');
+      if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.dataset.theme = t;
+    } catch (e) { /* storage blocked: js/theme.js still applies a theme */ }
+  </script>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <h1>The Progression of Thought in Computer Science</h1>
+      <p class="howto">Select a paper to light up what led to it and what it enabled. Drag to pan, scroll to zoom, Esc to clear.</p>
+    </div>
+    <button id="theme-toggle" class="theme-toggle" type="button"></button>
+  </header>
+
+  <div id="error" class="error" role="alert" hidden></div>
+
+  <main class="app-main">
+    <section id="canvas" class="canvas" aria-label="Timeline of papers"></section>
+    <aside id="panel" class="panel" aria-label="Paper details" hidden></aside>
+  </main>
+
+  <script src="vendor/d3.min.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
