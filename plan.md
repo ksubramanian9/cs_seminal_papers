@@ -12,14 +12,23 @@ Walking skeleton first: render all 79 nodes with era bands and selection highlig
 - **M1: built.** Its review checklist below is still open: the author has not yet answered it, so M2 proceeded on the defaults.
 - **M2: done and approved by the author** (template and tone accepted). The slice was CS001-CS014 (eras E1 and E2).
 - **M3a (era E3, 1962-1969, CS015-CS026): done.** The author reviewed it: raised the ghost cap, kept the evidence approach, approved the forward-pointing edges, and said not to trim the density.
-- **M3b (era E4, 1970-1979, CS027-CS043): built, awaiting a short review** (see "M3b review" below). 43 of 79 papers are now authored.
-- M3c-M3e (E5 to E7, 36 papers): not started.
+- **M3b (era E4, 1970-1979, CS027-CS043): done and committed.**
+- **M3c (era E5, 1980-1994, CS044-CS054): built, awaiting a short review** (see "M3c review" below). 54 of 79 papers are now authored.
+- M3d-M3e (E6 and E7, 25 papers): not started.
 - **Tests** (open any through Live Server; the page title reads ALL PASSED, and each page lists every check):
   - `tests/unit.html`: 45 checks (layout, traversal, the validator's rules, and the theme logic).
   - `tests/smoke.html`: 36 checks; mounts the real app on its own page and drives it, and loads the real `index.html` to test the theme toggle.
   - `tests/validate.html`: data integrity (spec section 7). Default is scoped to authored papers; add `?strict=1` for the definition of done (it fails until all 79 are authored and no placeholder edges remain).
 
-### M3b review (author decisions)
+### M3c review (author decisions)
+
+11 explanations (383-431 words), 11 diagrams, 17 new edges (3 explicit: Pnueli to model checking, Perceptron to backpropagation, Alexander to Design Patterns), 3 new ghost nodes (Perceptron, Alexander, Pnueli; 15 in total, cap 20). Two placeholders that touched this era (P19, P23) became real edges, leaving 7. Please skim a few (suggested: CS045 Byzantine generals, CS048 backpropagation, CS054 Design Patterns) and the link lists.
+
+1. **Ghost budget.** 15 used of 20, with Hashcash/Merkle, LSTM and seq2seq still proposed (18). Comfortable, but only two spares remain for M3d and M3e.
+2. **Three explicit edges to verify** are listed in `content/REVIEW_QUEUE.md`, section A.
+3. **Statements about industry use** (for example model checking at Intel, Microsoft and Amazon in CS044) are from memory; say if you would rather I make them generic.
+
+### M3b review (resolved)
 
 17 explanations (368-423 words), 17 diagrams, 31 new edges, 4 new ghost nodes (Multics, IMS/CODASYL, Simula 67, ARPANET; 12 in total, cap 20). Please skim a few (suggested: CS027 Codd, CS037 Diffie-Hellman, CS043 System R) and the link lists.
 

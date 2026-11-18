@@ -82,5 +82,26 @@
   "title": "ARPANET",
   "lane": "Networks and distributed systems",
   "blurb": "The first large packet-switched network, funded by the US Advanced Research Projects Agency, which began operating in 1969. Its experience, and its limits, led to the work on connecting different networks into one internet."
+ },
+ {
+  "id": "G013",
+  "year": 1958,
+  "title": "The Perceptron",
+  "lane": "AI and machine learning",
+  "blurb": "Frank Rosenblatt's learning machine, a single layer of adjustable connections that could learn to classify simple patterns. Minsky and Papert's 1969 analysis of its limits, which stressed what one layer cannot learn, slowed research on neural networks until multilayer training methods arrived."
+ },
+ {
+  "id": "G014",
+  "year": 1977,
+  "title": "Alexander: A Pattern Language",
+  "lane": "Software engineering",
+  "blurb": "Christopher Alexander's book of 253 patterns for towns, buildings and rooms, each a named solution to a recurring design problem in a context. Its form, not its content, was borrowed by the authors of Design Patterns."
+ },
+ {
+  "id": "G015",
+  "year": 1977,
+  "title": "Pnueli: temporal logic of programs",
+  "lane": "Programming languages and compilers",
+  "blurb": "Amir Pnueli's proposal to use temporal logic, a logic of how things change over time, to state and prove properties of concurrent programs such as 'a request is eventually granted'. It supplied the specification language that model checking later checked automatically."
  }
 ]

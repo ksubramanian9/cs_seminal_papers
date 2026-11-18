@@ -1,4 +1,4 @@
-# Review queue: CS001-CS043 (M2, M3a and M3b)
+# Review queue: CS001-CS054 (M2, M3a, M3b and M3c)
 
 Claims written from knowledge that you should spot-check against the sources. Tick an item once checked; if it is wrong, say so and I will fix the text and the data. Nothing here has been verified against the original papers.
 
@@ -25,8 +25,16 @@ Claims written from knowledge that you should spot-check against the sources. Ti
 - [ ] **CS027, CS039, CS043 chain.** Codd to Chen and Codd to System R are tagged explicit; E056 (IMS/CODASYL to Codd) is interpretive because I am not sure which systems Codd names.
 - [ ] **CS040 and CS037 history.** GCHQ researchers found public-key ideas earlier in secret (declassified 1997). The text does not mention it; add it if you want.
 - [ ] **CS034 chart.** The Brooks's-law chart is schematic, not data.
+- [ ] **Ghost nodes added in M3c (1980-1994):** The Perceptron (1958); Alexander, *A Pattern Language* (1977); Pnueli, temporal logic of programs (1977). That makes 15 (cap 20). Still proposed: Hashcash/Merkle trees, LSTM, sequence-to-sequence models.
+- [ ] **Explicit edges in M3c that need a citation check:** E087 (Pnueli to Clarke-Emerson), E093 (Perceptron to backpropagation: does the 1986 paper discuss the perceptron's limits?), E102 (Alexander to Design Patterns). E028 (LISP to SICP) was explicit already.
+- [ ] **CS045 authorship.** The paper has three authors (Lamport, Shostak, Pease); the CSV lists two. The text names all three.
+- [ ] **CS050 year.** The essay appeared in 1986 (IFIP) and 1987 (IEEE Computer); I kept the CSV year.
+- [ ] **CS047.** The claim that MIT replaced its SICP-based course around 2008 with a Python one is from memory.
+- [ ] **CS051.** The manager's note "Vague but exciting" and CERN's 1993 release of the Web technology are widely reported but from memory.
+- [ ] **CS044.** The text says model checking is used at Intel, Microsoft and Amazon; please confirm you are comfortable with those names, or I can make it generic.
+- [ ] **CS049 and CS054 on later influence.** Statements that Google's systems and Hadoop follow shared-nothing, and that patterns compensate for language gaps, are common accounts, not claims in those papers.
 
-## B. Explicit edges to verify (29)
+## B. Explicit edges to verify (32)
 
 For each, confirm that the later work cites or credits the earlier one in the way the "why" says.
 
@@ -59,8 +67,11 @@ For each, confirm that the later work cites or credits the earlier one in the wa
 - [ ] **E071** G009 Multics (1965) -> CS035 Protection principles (1975) (builds_on): The principles come from the authors' experience designing Multics, whose protection mechanisms the paper uses as its main examples.
 - [ ] **E074** CS038 Smalltalk (1976) -> CS054 Design patterns (1994) (builds_on): Design Patterns draws its examples largely from Smalltalk and C++, and several patterns, such as Model-View-Controller, come from the Smalltalk community.
 - [ ] **E075** CS037 Diffie-Hellman (1976) -> CS040 RSA (1978) (builds_on): RSA supplied what Diffie and Hellman had only proposed: a concrete trapdoor function that makes public-key encryption and digital signatures work.
+- [ ] **E087** G015 Pnueli: temporal logic of programs (1977) -> CS044 Model checking (1981) (builds_on): Clarke and Emerson build on Pnueli's use of temporal logic to state properties of concurrent programs, adding a branching-time variant that can be checked automatically.
+- [ ] **E093** G013 The Perceptron (1958) -> CS048 Backpropagation (1986) (overcomes_limit): Backpropagation trains networks with hidden layers, overcoming the limits of single-layer perceptrons that Minsky and Papert had stressed.
+- [ ] **E102** G014 Alexander: A Pattern Language (1977) -> CS054 Design patterns (1994) (builds_on): The book borrows the idea of a pattern language from Christopher Alexander's architecture, crediting him for the form of a pattern: a problem, a context and a proven solution.
 
-## C. Interpretive edges to read (57)
+## C. Interpretive edges to read (71)
 
 - [ ] **E011** CS005 Switching circuits (1938) -> CS007 EDVAC report (1945) (builds_on): Boolean switch algebra became the standard way to design the logic of digital machines, the circuits that EDVAC-style computers are made of.
 - [ ] **E012** CS005 Switching circuits (1938) -> CS008 Information theory (1948) (builds_on): Shannon moved from the algebra of two-valued switches to the mathematics of two-valued information, carrying the binary view from circuits to messages.
@@ -119,6 +130,20 @@ For each, confirm that the later work cites or credits the earlier one in the wa
 - [ ] **E084** CS042 Logical clocks (1978) -> CS069 Spanner (2012) (overcomes_limit): Spanner uses tightly synchronised clocks to order transactions worldwide, the physical-time answer to the ordering problem Lamport solved with logical clocks.
 - [ ] **E085** CS043 System R optimizer (1979) -> CS049 Shared nothing (1986) (builds_on): Shared-nothing parallel databases keep declarative queries and cost-based optimisation and spread the work across many machines.
 - [ ] **E086** G007 ALGOL 60 report (1960) -> CS041 The C language (1978) (builds_on): C's block structure and structured control flow descend from ALGOL through BCPL and B.
+- [ ] **E088** CS045 Byzantine generals (1982) -> CS058 Paxos (1998) (builds_on): Paxos solves the agreement problem when machines may crash but not lie, the easier relative of the Byzantine generals' problem.
+- [ ] **E089** CS045 Byzantine generals (1982) -> CS067 Bitcoin (2008) (new_domain): Bitcoin's proof of work is a way to agree on a ledger when some participants may be dishonest, the open-network cousin of the Byzantine generals' problem.
+- [ ] **E090** CS046 End-to-end argument (1984) -> CS051 World Wide Web (1989) (builds_on): The Web adds nothing to the network itself: its features live in servers and browsers at the ends, as the end-to-end arguments advise.
+- [ ] **E091** CS003 Lambda calculus (1936) -> CS047 SICP (1984) (builds_on): SICP builds its model of computation, from procedures as values to the metacircular evaluator, on the ideas of lambda calculus.
+- [ ] **E092** CS029 Modular decomposition (1972) -> CS047 SICP (1984) (builds_on): The book's abstraction barriers teach information hiding as a way of building programs in layers.
+- [ ] **E094** CS006 McCulloch-Pitts neurons (1943) -> CS048 Backpropagation (1986) (builds_on): Backpropagation trains networks of the simple threshold-like units that McCulloch and Pitts introduced as models of neurons.
+- [ ] **E095** CS048 Backpropagation (1986) -> CS068 AlexNet (2012) (builds_on): AlexNet is a deep convolutional network trained by backpropagation, now with graphics processors and a huge labelled dataset.
+- [ ] **E096** CS049 Shared nothing (1986) -> CS063 MapReduce (2004) (builds_on): MapReduce and Google's storage systems run on clusters of commodity machines that share nothing, the architecture Stonebraker argued for.
+- [ ] **E097** CS038 Smalltalk (1976) -> CS053 Liskov substitution (1994) (builds_on): Liskov and Wing's question, when may one object stand in for another, arises from the inheritance and subclassing of object-oriented languages such as Smalltalk.
+- [ ] **E098** CS050 No Silver Bullet (1987) -> CS054 Design patterns (1994) (builds_on): Design patterns attack the essential complexity of design by reusing proven designs, one of the promising attacks Brooks named.
+- [ ] **E099** CS050 No Silver Bullet (1987) -> CS060 Agile manifesto (2001) (builds_on): Agile methods adopt the incremental growing of software, close contact with users and emphasis on people that Brooks recommended.
+- [ ] **E100** CS051 World Wide Web (1989) -> CS057 PageRank (1998) (builds_on): PageRank treats the web's links as votes, turning the structure of hypertext into a measure of a page's importance.
+- [ ] **E101** G006 Bush: As We May Think (1945) -> CS051 World Wide Web (1989) (builds_on): Linked, shared information was the memex dream; the Web is its networked, public realisation.
+- [ ] **E103** CS007 EDVAC report (1945) -> CS052 Quantitative architecture (1990) (builds_on): Hennessy and Patterson measure designs of the stored-program architecture quantitatively, asking which trade-offs pay off on real programs.
 
 ## D. Claims by paper
 
@@ -355,6 +380,66 @@ For each, confirm that the later work cites or credits the earlier one in the wa
 - [ ] The costs in the diagram are illustrative
 - [ ] E059 (Codd to System R) is tagged explicit; E065 (B-trees to System R) and E085 (to shared nothing) are interpretive
 
+### CS044 Model checking (1981)
+- [ ] Clarke and Emerson 1981; Queille and Sifakis found the same idea independently; Turing Award 2007 (Clarke, Emerson, Sifakis)
+- [ ] Pnueli's 1977 paper introduced temporal logic for programs (basis for ghost G015 and edge E087, tagged explicit)
+- [ ] The logic in the paper is branching-time, later named CTL; the paper also synthesises synchronisation skeletons
+- [ ] E050 (Hoare logic to model checking) is interpretive
+
+### CS045 Byzantine generals (1982)
+- [ ] Authors of the paper: Lamport, Shostak and Pease (the CSV lists Lamport and Shostak)
+- [ ] With oral messages agreement needs more than two thirds loyal (n >= 3m+1); with signed messages any number of traitors can be tolerated
+- [ ] The impossibility result in asynchronous systems is Fischer, Lynch and Paterson (1985)
+- [ ] E082 (logical clocks to Byzantine generals) is interpretive; E088 (to Paxos) and E089 (to Bitcoin) are interpretive
+
+### CS046 End-to-end argument (1984)
+- [ ] Saltzer, Reed and Clark, 1984; the file-transfer example is the paper's own
+- [ ] The Internet's design philosophy is often cited as following this principle; E067 (TCP/IP to end-to-end) and E090 (end-to-end to the Web) are interpretive
+- [ ] Network neutrality as an application of the principle is a common account, not the paper's claim
+
+### CS047 SICP (1984)
+- [ ] Taught at MIT as the introductory course (6.001); the course was replaced around 2007-08 by a Python-based one
+- [ ] The metacircular evaluator is in chapter 4; the register-machine compiler in chapter 5
+- [ ] E028 (LISP to SICP) is tagged explicit: the book is built on Scheme, a LISP dialect; E091 and E092 are interpretive
+
+### CS048 Backpropagation (1986)
+- [ ] Rumelhart, Hinton and Williams, Nature 1986; Turing Award 2018 (Hinton, Bengio, LeCun)
+- [ ] Earlier versions: Linnainmaa 1970, Werbos 1974
+- [ ] The paper discusses the limits of the perceptron-convergence procedure without hidden units (basis for ghost G013 and edge E093, tagged explicit; verify)
+- [ ] E080 (symbolic AI as a rival), E094 and E095 are interpretive
+
+### CS049 Shared nothing (1986)
+- [ ] Stonebraker's paper appeared in IEEE Database Engineering Bulletin, 1986
+- [ ] Teradata and later systems used the shared-nothing design
+- [ ] E085 (System R to shared nothing) and E096 (shared nothing to MapReduce) are interpretive
+
+### CS050 No Silver Bullet (1987)
+- [ ] Brooks, 'No Silver Bullet: Essence and Accidents of Software Engineering', 1986/87 (the CSV lists 1987)
+- [ ] The four essential properties: complexity, conformity, changeability, invisibility
+- [ ] The 'promising attacks' he names include buy versus build, rapid prototyping, incremental development and growing great designers
+- [ ] E081, E098 and E099 are interpretive
+
+### CS051 World Wide Web (1989)
+- [ ] The proposal was written at CERN in March 1989; the manager's 'Vague but exciting' note is from Mike Sendall (as widely reported)
+- [ ] CERN put the Web technology in the public domain in 1993; the Mosaic browser followed
+- [ ] Berners-Lee: Turing Award 2016
+- [ ] E032 (Engelbart), E068 (TCP/IP), E090 (end-to-end) and E101 (Bush) are interpretive
+
+### CS052 Quantitative architecture (1990)
+- [ ] Hennessy (Stanford, MIPS) and Patterson (Berkeley, RISC); Turing Award 2017
+- [ ] The three-factor performance equation and 'make the common case fast' are central to the book
+- [ ] E039 (Moore's law), E042 (Amdahl) and E103 (the stored-program machine) are edges into the book; only E042 is tagged explicit
+
+### CS053 Liskov substitution (1994)
+- [ ] Liskov and Wing, ACM TOPLAS 1994; the substitution principle was stated by Liskov in 1987; Liskov received the Turing Award in 2008
+- [ ] The square/rectangle example is the standard illustration, not the paper's own
+- [ ] E051 (Hoare), E063 (Parnas) and E097 (Smalltalk) are interpretive
+
+### CS054 Design patterns (1994)
+- [ ] Gamma, Helm, Johnson and Vlissides, 1994; 23 patterns in three groups
+- [ ] The book credits Christopher Alexander for the pattern idea (basis for ghost G014 and edge E102, tagged explicit)
+- [ ] E074 (Smalltalk to the book) is tagged explicit: the book draws on Smalltalk examples such as Model-View-Controller; E064 and E098 are interpretive
+
 ## E. Facts stated in the text that are worth a quick check
 
 - [ ] **CS001**: Russell found his paradox in 1901; Principia has three volumes (1910-1913); the Logic Theorist (1956) proved theorems from its chapter 2
@@ -398,3 +483,14 @@ For each, confirm that the later work cites or credits the earlier one in the wa
 - [ ] **CS041**: Designed for UNIX; descends from BCPL and B; the 1978 book's first program prints hello, world; ANSI C 1989
 - [ ] **CS042**: Happened-before relation; logical clocks; state machine replication; Turing Award 2013; vector clocks 1988
 - [ ] **CS043**: System R optimizer by Selinger and colleagues; dynamic programming over join orders; interesting orders
+- [ ] **CS044**: Branching-time logic (CTL); checks a formula in time proportional to graph and formula size; state explosion; Turing Award 2007 (Clarke, Emerson, Sifakis)
+- [ ] **CS045**: Oral messages need n >= 3m+1; signed messages tolerate any number of traitors; PBFT by Castro and Liskov; the asynchronous impossibility result is Fischer, Lynch and Paterson (1985)
+- [ ] **CS046**: The file-transfer example; Saltzer, Reed and Clark (1984); network neutrality as a later application
+- [ ] **CS047**: Abelson and Sussman; Scheme; metacircular evaluator in chapter 4; MIT 6.001 replaced around 2007-08
+- [ ] **CS048**: Rumelhart, Hinton and Williams (Nature 1986); earlier versions by Linnainmaa (1970) and Werbos (1974); Turing Award 2018 (Hinton, Bengio, LeCun); Minsky and Papert 1969
+- [ ] **CS049**: Stonebraker, IEEE Database Engineering Bulletin 1986; three architectures compared; Teradata as a shared-nothing system
+- [ ] **CS050**: Essential versus accidental difficulty; the four properties (complexity, conformity, changeability, invisibility); the "promising attacks" named in the essay
+- [ ] **CS051**: Written at CERN in March 1989; URL, HTTP, HTML introduced in 1990; Mosaic and the 1993 public-domain release; W3C; Turing Award 2016
+- [ ] **CS052**: Hennessy (Stanford) and Patterson (Berkeley); the performance equation (instruction count, CPI, cycle time); RISC; Turing Award 2017
+- [ ] **CS053**: Liskov and Wing, TOPLAS 1994; substitution principle first stated 1987; preconditions, postconditions, invariants and history constraints; Turing Award 2008
+- [ ] **CS054**: Gamma, Helm, Johnson, Vlissides (1994); 23 patterns in creational, structural and behavioural groups; two principles (program to an interface; favour composition over inheritance)
