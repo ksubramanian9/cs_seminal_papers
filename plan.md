@@ -15,8 +15,9 @@ Walking skeleton first: render all 79 nodes with era bands and selection highlig
 - **M3b (era E4, 1970-1979, CS027-CS043): done and committed.**
 - **M3c (era E5, 1980-1994, CS044-CS054): done and committed.**
 - **M3d (era E6, 1995-2008, CS055-CS067): done and committed.**
-- **M3e (era E7, 2009-2023, CS068-CS079): built, awaiting a short review** (see "M3e review" below). **All 79 papers are now authored**, with no placeholder edges left.
-- **Next:** M4 (widgets) and M5 (polish and hardening). The strict validator (`tests/validate.html?strict=1`, the project's definition of done for content) is the gate for M3, and its result is recorded under "M3e review".
+- **M3e (era E7, 2009-2023, CS068-CS079): built and committed** (`cc562cd`); its short review is still open (see "M3e review" below). **All 79 papers are now authored**, with no placeholder edges left.
+- **Widget list for M4: agreed** (task 4.2, see spec section 5.5): 12 papers served by five reusable widget types.
+- **Next:** M4 (build the widgets: contract first, then the five types) and M5 (polish and hardening). The strict validator (`tests/validate.html?strict=1`, the project's definition of done for content) is the gate for M3, and its result is recorded under "M3e review".
 - **Tests** (open any through Live Server; the page title reads ALL PASSED, and each page lists every check):
   - `tests/unit.html`: 45 checks (layout, traversal, the validator's rules, and the theme logic).
   - `tests/smoke.html`: 36 checks; mounts the real app on its own page and drives it, and loads the real `index.html` to test the theme toggle.
@@ -175,8 +176,8 @@ Checkpoint after 3e: cross-era pass. Read all edges that cross era boundaries an
 | # | Task | Done when |
 |---|---|---|
 | 4.1 | Widget contract: `mount(container, config)` / `destroy()`, load on demand | Panel mounts and cleans up a widget when the selection changes (no leaks) |
-| 4.2 | Pick the final 10–15 widget papers from the spec's candidate list, with the author | List agreed and recorded in the spec |
-| 4.3 | Build the 6–10 reusable widget types (stepper, slider-model, graph-step, table-ops, message-diagram, matrix-viz, etc.) and configure each paper | Each widget works with keyboard and mouse, resets, and has a one-line caption |
+| 4.2 | Pick the final 10–15 widget papers from the spec's candidate list, with the author | **Done:** 12 papers agreed and recorded in spec section 5.5 (stepper ×4, slider model ×4, training loop ×2, graph iteration ×1, message simulator ×1) |
+| 4.3 | Build the five reusable widget types (stepper, slider model, training loop, graph iteration, message simulator) and configure each of the 12 papers | Each widget works with keyboard and mouse, resets, and has a one-line caption |
 | 4.4 | Manual test of each widget, including mount/unmount cycles | No console errors; no leaked listeners |
 
 ### M5: Polish and hardening
@@ -206,7 +207,7 @@ M4 widget infrastructure (4.1) can begin once M2's panel exists, in parallel wit
 | 79 entries × ~400 words is a large writing task and tone drifts | High | M2 template checkpoint; era-by-era drafting; single reviewer |
 | The canvas becomes a hairball in dense eras (1960s–70s, 2010s) | Medium | Lane order tuned in M1; collision stacking; edge opacity by evidence; limit to ~2–3 edges per paper |
 | Edge routing across 12 lanes creates unreadable crossings | Medium | Curve routing tuned in M1; validate on the real edge set at M3 checkpoints |
-| Widget scope balloons | Medium | Capped at 10–15 papers and 6–10 types; cut candidates freely |
+| Widget scope balloons | Medium | Capped at the 12 agreed papers and five types (spec section 5.5); anything else is a later version |
 | Author changes the corpus mid-way | Low | JSON is the source after M0; "ask first" boundary in the spec |
 | Hand-written SVG diagrams are inconsistent | Medium | Shared diagram style guide (stroke, palette, label size) created at M2 |
 | D3 version drift | Low | Pin and vendor one version; no CDN |

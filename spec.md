@@ -165,24 +165,30 @@ In this order:
 
 ### 5.5 Widgets
 
-A small widget library with a common contract: a widget module exports `mount(container, config)` and `destroy()`. About 6–10 widget types, reused across about 10–15 papers. Candidate papers (the final set is chosen in the plan):
+A small widget library with a common contract: a widget module exports `mount(container, config)` and `destroy()`. Five reusable widget types serve **12 papers** (the number and the list were chosen with the author after M3e).
 
-| Paper | Candidate widget |
-|---|---|
-| CS004 Turing | Step-through of a tiny Turing machine |
-| CS003 Church | Lambda-term reduction stepper |
-| CS008 Shannon | Entropy of a editable symbol distribution |
-| CS011 Chomsky | Tiny grammar that generates and accepts strings |
-| CS013 Dijkstra | Shortest-path on a small graph, step by step |
-| CS016 Quicksort | Partition animation |
-| CS021 Amdahl | Slider for serial fraction and processors |
-| CS027 Codd | Relational operations on two small tables |
-| CS037 / CS040 | Key-exchange and toy-RSA walkthrough |
-| CS042 Lamport | Logical clocks on a message diagram |
-| CS048 Backprop | One-neuron gradient step |
-| CS057 PageRank | Rank iteration on a small web |
-| CS063 MapReduce | Word-count map/shuffle/reduce |
-| CS075 Attention | Attention weights over a short sentence |
+**Selection principles the author confirmed:** (1) ideas that click when you play with them; (2) at least one widget per era; (3) a spread across fields; (4) weight toward the ideas the author finds hardest.
+
+| Paper | Era | Field | Widget | Type |
+|---|---|---|---|---|
+| CS003 Church | 1910–39 | Foundations | Step a lambda expression through substitution to its result | stepper |
+| CS004 Turing | 1910–39 | Foundations | Run a tiny Turing machine: tape, head, state and rule table | stepper |
+| CS008 Shannon | 1940–61 | Information theory | Edit symbol probabilities; see entropy in bits, the compression limit and a noisy channel | slider model |
+| CS013 Dijkstra | 1940–61 | Algorithms | Settle nodes of a small map in order of distance, with the distance table updating | stepper |
+| CS016 Quicksort | 1962–69 | Algorithms | Pick a pivot, partition, recurse; compare with a slow sort | stepper |
+| CS021 Amdahl | 1962–69 | Architecture | Sliders for parallel fraction and processors; a speedup curve that flattens | slider model |
+| CS034 Brooks | 1970–79 | Software engineering | Team size against time to finish, with communication paths growing as n(n−1)/2 | slider model |
+| CS048 Backpropagation | 1980–94 | AI and ML | Train a tiny network: forward pass, error passed back, weights nudged | training loop |
+| CS057 PageRank | 1995–2008 | HCI and web | A small web of pages: change the links, run the iteration, watch scores settle | graph iteration |
+| CS058 Paxos | 1995–2008 | Networks and distributed | Proposers and acceptors exchanging prepare, promise and accept, with failures you can inject | message simulator |
+| CS065 Differential privacy | 1995–2008 | Security and privacy | Slide ε; see the noise added to a count and the accuracy–privacy trade-off | slider model |
+| CS070 GAN | 2009–23 | AI and ML | A toy generator and discriminator on one-dimensional data, the fake distribution moving toward the real one | training loop |
+
+**Types:** stepper (4 papers), slider model (4), training loop (2), graph iteration (1), message simulator (1). All share the contract above and a common play, step and reset control bar; the stepper and slider-model types are built once and configured per paper.
+
+**Coverage.** Every era has at least one widget (1910–39 two; 1940–61 two; 1962–69 two; 1970–79 one; 1980–94 one; 1995–2008 three; 2009–23 one). Nine of the 12 fields are represented. The three without a widget are databases, programming languages and compilers, and operating systems.
+
+**Considered and not chosen for v1** (candidates for a later version): Gödel numbering (CS002), NP-completeness reductions (CS028), Lamport clocks (CS042), the Chomsky grammar demo (CS011), relational operations (CS027), key exchange and toy RSA (CS037/CS040), MapReduce word count (CS063), attention weights (CS075), model checking (CS044), the end-to-end argument (CS046), B-tree insertion (CS030) and BERT masked words (CS076). The author flagged Gödel, NP-completeness and Paxos as the hardest ideas so far; only Paxos made the final 12 because the slots were limited.
 
 Papers without a widget show a static SVG diagram and nothing else extra.
 
@@ -229,7 +235,7 @@ A `tests/validate.html` page, run through Live Server, loads all data and report
 
 1. Final era boundaries (proposed in §4.5).
 2. The final ghost-node list (proposed in §4.4).
-3. The final list of ~10–15 widget papers (candidates in §5.5).
+3. ~~The final list of ~10–15 widget papers~~ Settled with the author: 12 papers, listed in §5.5.
 4. Short labels for the 79 nodes.
 5. Whether to compress 1910–1930 on the axis (default: yes).
 6. A visual style direction (palette and typography), chosen at the walking-skeleton milestone and reviewed by the author.
