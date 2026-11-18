@@ -191,7 +191,7 @@ await check('drag pans the view when zoomed in, never past the world edge', asyn
   assert(x1 < x0, `pan ${x0} -> ${x1}`);
   ev('mousedown', 400, 400, svg); ev('mousemove', 9000, 400, w); ev('mouseup', 9000, 400, w);
   await sleep(200);
-  assert(transOf()[0] <= 0, 'must not pan right past the world start');
+  assert(transOf()[0] <= 0.5, `must not pan right past the world start (tx=${transOf()[0]})`); // d3's clamp can leave ~1e-13 of float noise
 });
 
 /* ---------- the explanation panel (M2) ---------- */
@@ -245,9 +245,15 @@ await check('clicking a linked paper selects it, opens its panel and updates the
 });
 
 await check('a paper with no explanation yet shows the provisional note and no diagram', async () => {
-  await select('CS027');
-  assert(panelEl.querySelector('.placeholder-note') && !panelEl.querySelector('img.diagram'));
-  assert(h3s().includes('Central idea'));
+  // A synthetic model, so this keeps working however many real papers have been authored.
+  const host = d.createElement('aside'); d.body.appendChild(host);
+  const p = createPanel(host, {});
+  const paper = app.data.papers[0];
+  p.show({ paper, explanation: null, groups: { drewOn: [], ledTo: [], rivals: [] } });
+  assert(host.querySelector('.placeholder-note') && !host.querySelector('img.diagram'), 'provisional note, no diagram');
+  assert([...host.querySelectorAll('h3')].map((x) => x.textContent).includes('Central idea'));
+  assert([...host.childNodes].every((n) => n.nodeType === 1), 'no stray text nodes');
+  host.remove();
 });
 
 await check('every authored paper renders all sections, a diagram, and at least one link', async () => {
@@ -268,8 +274,15 @@ await check('no panel, for any of the 79 papers, contains stray text such as "nu
     await sleep(15);
     const loose = [...panelEl.childNodes].filter((n) => n.nodeType !== 1);
     if (loose.length) bad.push(`${p.id}: loose text node ${JSON.stringify(loose[0].textContent)}`);
-    const m = panelEl.textContent.match(/\b(null|undefined|NaN)\b/);
-    if (m) bad.push(`${p.id}: contains "${m[0]}"`);
+    // A bug shows up as a text node or element that is *only* the word, or as an object/template leak.
+    // (The word "undefined" can appear legitimately in prose, e.g. about C's undefined behaviour.)
+    const walker = d.createTreeWalker(panelEl, NodeFilter.SHOW_TEXT);
+    for (let t = walker.nextNode(); t; t = walker.nextNode()) {
+      const v = t.textContent.trim();
+      if (/^(null|undefined|NaN)$/.test(v)) bad.push(`${p.id}: stray text "${v}"`);
+    }
+    const leak = panelEl.textContent.match(/\[object \w+\]|\$\{|undefined undefined|null null/);
+    if (leak) bad.push(`${p.id}: leaked "${leak[0]}"`);
   }
   assert(bad.length === 0, `${bad.length} problem(s): ${bad.slice(0, 4).join(' | ')}`);
 });

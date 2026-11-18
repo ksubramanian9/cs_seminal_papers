@@ -19,7 +19,7 @@ An interactive, browser-only application that explains each of the 79 works in t
 | Interactions (v1) | Select node → highlight full ancestry and descendants, dim the rest. Plus pan/zoom and deep links (`#CS004`) |
 | Landing | Era bands with "what the field was asking" captions |
 | Interactivity | ~10–15 papers get reusable demo widgets; every other paper gets a static SVG diagram |
-| Corpus | CSV rows are the core nodes; ≤12 ghost context nodes for outside influences |
+| Corpus | CSV rows are the core nodes; up to 20 ghost context nodes for outside influences (cap raised from 12 by the author after M3a) |
 | Data pipeline | One-time CSV→JSON conversion; JSON is the source of truth afterward |
 | Runtime | Static files, served by Live Server; `fetch()` and ES modules allowed; no `file://` support |
 | Dependencies | D3 v7 vendored in `vendor/`; nothing else; no CDN |
@@ -97,7 +97,7 @@ Edge type meanings:
 
 `{ id, year, title, lane, blurb }`. Ghost nodes are greyed, not clickable into a full panel, and show only a tooltip with the blurb. They may be the `from` end of an edge, but never the `to` end. Proposed (author approves before use):
 
-Used so far (M2, pending the author's approval): Boole, *Laws of Thought* (1854); Frege, *Begriffsschrift* (1879); Hilbert's decision problem (1928); ENIAC (1945); Wiener, *Cybernetics* (1948). Still proposed: Boole, *Laws of Thought* (1854); Hilbert's Entscheidungsproblem (1928); the transistor (1947); the Perceptron (1958); ALGOL 60 report (1960); ARPANET (1969); Hashcash/Merkle trees (precursors to Bitcoin); LSTM (1997); sequence-to-sequence models (2014); plus up to three more chosen while authoring.
+In use so far (12): Boole, *Laws of Thought* (1854); Frege, *Begriffsschrift* (1879); Hilbert's decision problem (1928); ENIAC (1945); Wiener, *Cybernetics* (1948); Bush, *As We May Think* (1945); the ALGOL 60 report (1960); the transistor and integrated circuit (1947); Multics (1965); IMS and CODASYL databases (1968); Simula 67 (1967); ARPANET (1969). Still proposed, not yet used (4): the Perceptron (1958); Hashcash/Merkle trees (precursors to Bitcoin); LSTM (1997); sequence-to-sequence models (2014). That would reach 16, within the cap of 20 (raised from 12 by the author after M3a).
 
 ### 4.5 `eras.json`
 

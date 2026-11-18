@@ -1,12 +1,86 @@
 [
- { "id": "G001", "year": 1854, "title": "Boole: Laws of Thought", "lane": "Foundations and logic",
-   "blurb": "George Boole showed that logical reasoning can be written as algebra on just two values, true and false (1 and 0)." },
- { "id": "G002", "year": 1928, "title": "Hilbert's decision problem", "lane": "Foundations and logic",
-   "blurb": "Hilbert and Ackermann's 1928 textbook posed the Entscheidungsproblem: is there a mechanical procedure that decides whether any statement of logic is valid? It sat inside Hilbert's wider programme to show mathematics consistent and complete by finite reasoning." },
- { "id": "G003", "year": 1879, "title": "Frege: Begriffsschrift", "lane": "Foundations and logic",
-   "blurb": "Gottlob Frege's first fully formal logical notation, the seed of logicism: the project of deriving arithmetic from pure logic." },
- { "id": "G004", "year": 1945, "title": "ENIAC", "lane": "Architecture and hardware",
-   "blurb": "The first large electronic general-purpose computer. It was programmed by rewiring cables and setting switches, which could take days for each new task." },
- { "id": "G005", "year": 1948, "title": "Wiener: Cybernetics", "lane": "AI and machine learning",
-   "blurb": "Norbert Wiener's study of control and communication in animals and machines, built around feedback. In the early 1950s it was the competing framing for machine intelligence; McCarthy has said he coined 'artificial intelligence' partly to distance the field from it." }
+ {
+  "id": "G001",
+  "year": 1854,
+  "title": "Boole: Laws of Thought",
+  "lane": "Foundations and logic",
+  "blurb": "George Boole showed that logical reasoning can be written as algebra on just two values, true and false (1 and 0)."
+ },
+ {
+  "id": "G002",
+  "year": 1928,
+  "title": "Hilbert's decision problem",
+  "lane": "Foundations and logic",
+  "blurb": "Hilbert and Ackermann's 1928 textbook posed the Entscheidungsproblem: is there a mechanical procedure that decides whether any statement of logic is valid? It sat inside Hilbert's wider programme to show mathematics consistent and complete by finite reasoning."
+ },
+ {
+  "id": "G003",
+  "year": 1879,
+  "title": "Frege: Begriffsschrift",
+  "lane": "Foundations and logic",
+  "blurb": "Gottlob Frege's first fully formal logical notation, the seed of logicism: the project of deriving arithmetic from pure logic."
+ },
+ {
+  "id": "G004",
+  "year": 1945,
+  "title": "ENIAC",
+  "lane": "Architecture and hardware",
+  "blurb": "The first large electronic general-purpose computer. It was programmed by rewiring cables and setting switches, which could take days for each new task."
+ },
+ {
+  "id": "G005",
+  "year": 1948,
+  "title": "Wiener: Cybernetics",
+  "lane": "AI and machine learning",
+  "blurb": "Norbert Wiener's study of control and communication in animals and machines, built around feedback. In the early 1950s it was the competing framing for machine intelligence; McCarthy has said he coined 'artificial intelligence' partly to distance the field from it."
+ },
+ {
+  "id": "G006",
+  "year": 1945,
+  "title": "Bush: As We May Think",
+  "lane": "HCI and web",
+  "blurb": "Vannevar Bush's essay imagined the memex, a desk-sized device that stores a person's books and records and lets them build and follow trails of links between them. It planted the idea of linked, personal information that Engelbart, and later the web, took up."
+ },
+ {
+  "id": "G007",
+  "year": 1960,
+  "title": "ALGOL 60 report",
+  "lane": "Programming languages and compilers",
+  "blurb": "The report defining ALGOL 60, written by an international committee. It introduced block structure, recursion and a formal grammar notation, and set the style for structured languages that followed."
+ },
+ {
+  "id": "G008",
+  "year": 1947,
+  "title": "Transistor and integrated circuit",
+  "lane": "Architecture and hardware",
+  "blurb": "The transistor (1947) replaced bulky vacuum tubes with a small solid-state switch; the integrated circuit (1958-59) then put many transistors on a single chip, the technology whose cost curve Moore described."
+ },
+ {
+  "id": "G009",
+  "year": 1965,
+  "title": "Multics",
+  "lane": "Operating systems and systems",
+  "blurb": "An ambitious time-sharing operating system built by MIT, Bell Labs and General Electric. It pioneered a hierarchical file system, protection rings and a command interpreter that was an ordinary program. Bell Labs withdrew in 1969, and two of its researchers went on to write UNIX."
+ },
+ {
+  "id": "G010",
+  "year": 1968,
+  "title": "IMS and CODASYL databases",
+  "lane": "Databases",
+  "blurb": "The tree-structured (IBM IMS) and network (CODASYL) database systems of the late 1960s, in which programs followed stored pointers from record to record. Their dependence on how data was laid out is what Codd's relational model set out to remove."
+ },
+ {
+  "id": "G011",
+  "year": 1967,
+  "title": "Simula 67",
+  "lane": "Programming languages and compilers",
+  "blurb": "A simulation language by Ole-Johan Dahl and Kristen Nygaard that introduced classes and objects. Alan Kay took the object idea from it as the starting point for Smalltalk."
+ },
+ {
+  "id": "G012",
+  "year": 1969,
+  "title": "ARPANET",
+  "lane": "Networks and distributed systems",
+  "blurb": "The first large packet-switched network, funded by the US Advanced Research Projects Agency, which began operating in 1969. Its experience, and its limits, led to the work on connecting different networks into one internet."
+ }
 ]

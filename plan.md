@@ -10,14 +10,33 @@ Walking skeleton first: render all 79 nodes with era bands and selection highlig
 
 - **M0: done.**
 - **M1: built.** Its review checklist below is still open: the author has not yet answered it, so M2 proceeded on the defaults.
-- **M2: built, awaiting the author checkpoint** (see "M2 checkpoint" below). The slice is CS001-CS014 (eras E1 and E2).
-- M3 onward: not started.
+- **M2: done and approved by the author** (template and tone accepted). The slice was CS001-CS014 (eras E1 and E2).
+- **M3a (era E3, 1962-1969, CS015-CS026): done.** The author reviewed it: raised the ghost cap, kept the evidence approach, approved the forward-pointing edges, and said not to trim the density.
+- **M3b (era E4, 1970-1979, CS027-CS043): built, awaiting a short review** (see "M3b review" below). 43 of 79 papers are now authored.
+- M3c-M3e (E5 to E7, 36 papers): not started.
 - **Tests** (open any through Live Server; the page title reads ALL PASSED, and each page lists every check):
   - `tests/unit.html`: 45 checks (layout, traversal, the validator's rules, and the theme logic).
   - `tests/smoke.html`: 36 checks; mounts the real app on its own page and drives it, and loads the real `index.html` to test the theme toggle.
   - `tests/validate.html`: data integrity (spec section 7). Default is scoped to authored papers; add `?strict=1` for the definition of done (it fails until all 79 are authored and no placeholder edges remain).
 
-### M2 checkpoint (author decisions)
+### M3b review (author decisions)
+
+17 explanations (368-423 words), 17 diagrams, 31 new edges, 4 new ghost nodes (Multics, IMS/CODASYL, Simula 67, ARPANET; 12 in total, cap 20). Please skim a few (suggested: CS027 Codd, CS037 Diffie-Hellman, CS043 System R) and the link lists.
+
+1. **Explicit edges.** 9 of the 31 new edges are tagged explicit (up from 3 in M3a, because this era has well-known direct citations). Five of them are ones I judged likely but have not checked: E058, E066, E069, E071, E074. They are listed in `content/REVIEW_QUEUE.md`, section A.
+2. **Placeholders.** Six placeholders that touched this era (P11, P13, P15-P18) became real edges, leaving 9 placeholders for M3c-M3e.
+3. **Anything in the text you want changed.** For example the GCHQ prior discovery of public-key ideas (CS037, CS040) is deliberately left out; say if you want it added.
+
+### M3a review (resolved)
+
+Same template as M2: 12 explanations (354-430 words), 12 diagrams, 27 new edges, 3 new ghost nodes. Please skim a few (suggested: CS019 Moore, CS022 GOTO, CS025 THE) and the "What this paper drew on / led to" lists, then decide:
+
+1. **Ghost-node budget.** The spec caps ghosts at 12. There are now 8 (Boole, Frege, Hilbert, ENIAC, Wiener, Bush, ALGOL 60, Transistor/IC). The spec's list still proposes 5 more (Perceptron, ARPANET, Hashcash/Merkle, LSTM, seq2seq), which would make 13. Drop one, or raise the cap to 13 or more?
+2. **Evidence tags are mostly interpretive.** 24 of the 27 new edges are interpretive, because an `explicit` tag asserts a citation and I only use it where I am confident the later paper cites the earlier. The explicit ones are E029 (Bush to Engelbart), E033 (ALGOL to Quicksort) and E042 (Amdahl to Hennessy and Patterson). If you would like more explicit edges, they need checking against the papers' reference lists; see `content/REVIEW_QUEUE.md`.
+3. **Forward-pointing edges.** Several edges from this era point at papers not authored yet (for example to Smalltalk, UNIX, Parnas, Brooks, Cook, Model checking). They are already real, not placeholders; M3b-M3e will reuse them and may add more.
+4. **Density.** The canvas now has 70 edges; the left side (1910-1960) is the busiest. Fine, or should some be trimmed?
+
+### M2 checkpoint (author decisions; resolved: the template was approved)
 
 Please read a few full entries (suggested: CS004 Turing, CS007 EDVAC, CS011 Chomsky) and the link lists in their panels, then decide:
 
@@ -28,7 +47,7 @@ Please read a few full entries (suggested: CS004 Turing, CS007 EDVAC, CS011 Chom
 5. **Diagrams.** 14 static SVGs; style guide in `content/DIAGRAM_STYLE.md`. Clear enough? Anything misleading?
 6. **Changed from the spec:** CS011's short label is now "Three models of language" (the 1956 paper compares three models; the hierarchy came in 1959).
 
-The rest of M3 (65 papers) does not start until you approve the template.
+(The template was approved at the start of M3a.)
 
 ### M1 review checklist (author decisions)
 
