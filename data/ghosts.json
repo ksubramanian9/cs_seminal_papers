@@ -117,5 +117,26 @@
   "title": "Bellman: dynamic programming",
   "lane": "Algorithms and complexity",
   "blurb": "Richard Bellman's method for solving multistage decision problems by working out the value of each state from the values of the states that follow it. Its equations are the mathematical core of reinforcement learning."
+ },
+ {
+  "id": "G018",
+  "year": 1989,
+  "title": "LeNet and convolutional networks",
+  "lane": "AI and machine learning",
+  "blurb": "Yann LeCun and colleagues' convolutional neural networks for reading handwritten digits (1989 to 1998), trained by backpropagation: layers of small shared filters that scan across an image. AlexNet is, at heart, this design made much bigger."
+ },
+ {
+  "id": "G019",
+  "year": 1997,
+  "title": "LSTM",
+  "lane": "AI and machine learning",
+  "blurb": "Hochreiter and Schmidhuber's long short-term memory network, a recurrent neural network with gates that lets it carry information across many steps. It was the standard model for sequences such as text and speech until Transformers replaced it."
+ },
+ {
+  "id": "G020",
+  "year": 2014,
+  "title": "Sequence-to-sequence with attention",
+  "lane": "AI and machine learning",
+  "blurb": "Sutskever, Vinyals and Le (2014) showed that one recurrent network can read a sentence and another write its translation; Bahdanau, Cho and Bengio (2014) added attention, letting the writing network look back at every input word as it chooses each output word."
  }
 ]

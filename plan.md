@@ -14,14 +14,23 @@ Walking skeleton first: render all 79 nodes with era bands and selection highlig
 - **M3a (era E3, 1962-1969, CS015-CS026): done.** The author reviewed it: raised the ghost cap, kept the evidence approach, approved the forward-pointing edges, and said not to trim the density.
 - **M3b (era E4, 1970-1979, CS027-CS043): done and committed.**
 - **M3c (era E5, 1980-1994, CS044-CS054): done and committed.**
-- **M3d (era E6, 1995-2008, CS055-CS067): built, awaiting a short review** (see "M3d review" below). 67 of 79 papers are now authored.
-- M3e (E7, 2009-2023, CS068-CS079, 12 papers): not started. After it, run the validator with `?strict=1` (the project's definition of done).
+- **M3d (era E6, 1995-2008, CS055-CS067): done and committed.**
+- **M3e (era E7, 2009-2023, CS068-CS079): built, awaiting a short review** (see "M3e review" below). **All 79 papers are now authored**, with no placeholder edges left.
+- **Next:** M4 (widgets) and M5 (polish and hardening). The strict validator (`tests/validate.html?strict=1`, the project's definition of done for content) is the gate for M3, and its result is recorded under "M3e review".
 - **Tests** (open any through Live Server; the page title reads ALL PASSED, and each page lists every check):
   - `tests/unit.html`: 45 checks (layout, traversal, the validator's rules, and the theme logic).
   - `tests/smoke.html`: 36 checks; mounts the real app on its own page and drives it, and loads the real `index.html` to test the theme toggle.
   - `tests/validate.html`: data integrity (spec section 7). Default is scoped to authored papers; add `?strict=1` for the definition of done (it fails until all 79 are authored and no placeholder edges remain).
 
-### M3d review (author decisions)
+### M3e review (author decisions)
+
+12 explanations (410-448 words), 12 diagrams, 19 new edges (12 explicit), 3 new ghost nodes (LeNet, LSTM, sequence-to-sequence with attention; 20 of 20 used). All five remaining placeholders (P24 to P28) became real edges, so there are none left. Please skim a few (suggested: CS075 Transformer, CS077 GPT-3, CS079 SWE-bench) and the link lists.
+
+1. **Twelve explicit edges to verify** are listed in `content/REVIEW_QUEUE.md`, section A. Most are ordinary direct citations between recent papers.
+2. **Ghost cap fully used.** 20 of 20, so any further ghost would need a rise in the cap.
+3. **The newest papers date quickly.** Statements about what followed (CS078 Copilot, CS079 later progress and SWE-bench Verified) are from memory.
+
+### M3d review (resolved)
 
 13 explanations (380-441 words), 13 diagrams, 22 new edges (8 explicit), 2 new ghost nodes (Hashcash/Merkle trees and Bellman's dynamic programming; 17 of 20 used). Two placeholders that touched this era (P20 Paxos to Raft, P21 GFS to MapReduce) became real explicit edges, leaving 5, all in M3e. Please skim a few (suggested: CS058 Paxos, CS061 CAP, CS067 Bitcoin) and the link lists.
 

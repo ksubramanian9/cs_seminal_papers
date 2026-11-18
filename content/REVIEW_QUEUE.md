@@ -1,4 +1,4 @@
-# Review queue: CS001-CS067 (M2, M3a, M3b, M3c and M3d)
+# Review queue: all 79 papers (M2, M3a, M3b, M3c, M3d and M3e)
 
 Claims written from knowledge that you should spot-check against the sources. Tick an item once checked; if it is wrong, say so and I will fix the text and the data. Nothing here has been verified against the original papers.
 
@@ -40,8 +40,13 @@ Claims written from knowledge that you should spot-check against the sources. Ti
 - [ ] **CS065 deployments.** The 2020 US Census and the Apple, Google and Microsoft uses are from public announcements, remembered; the original paper predates them.
 - [ ] **CS066 influence.** Statements that Dynamo was the model for Cassandra, Riak and Voldemort, and led to DynamoDB, are common accounts; DynamoDB has a different internal design.
 - [ ] **CS059 and CS060.** The Chrysler C3 origin of XP, the 2004 second edition, and the seventeen signatories at Snowbird, Utah are from memory.
+- [ ] **Ghost nodes added in M3e (2009-2023):** LeNet and convolutional networks (1989); LSTM (1997); sequence-to-sequence with attention (2014). That makes 20, exactly the cap, so there are no spares.
+- [ ] **Explicit edges in M3e that need a citation check (12):** E126 (LeNet to AlexNet), E128 (AlexNet to ResNet), E129 (backpropagation to GANs), E131 (ResNet to Transformer: residual connections), E132 (LSTM to Transformer), E133 (seq2seq with attention to Transformer), E134 (Transformer to BERT), E135 (Transformer to GPT-3), E136 (BERT to GPT-3), E137 (GPT-3 to Codex), E138 (Codex to SWE-bench), E140 (Paxos to Borg). Most of these are ordinary direct citations between recent papers, but I have not checked them against the reference lists.
+- [ ] **Numbers in M3e text and diagrams.** AlexNet 15.3% versus 26.2% top-5 error; GPT-3 175 billion parameters; Codex pass@1 about 29% and pass@100 about 72% (28.8% and 72.3% as I recall them); SWE-bench 2,294 issues from 12 repositories and Claude 2 resolving about 1.96%; ResNet 152 layers and 3.6% top-5 error.
+- [ ] **Claims about later events** (BERT in Google Search in 2019, Copilot in 2021, what followed SWE-bench, Kubernetes in 2014, CockroachDB and YugabyteDB as Spanner-inspired) are from memory, and for the newest papers they date quickly.
+- [ ] **"Among the most cited"** claims for ResNet (CS072) and the Transformer (CS075) are from general knowledge of citation counts, not looked up.
 
-## B. Explicit edges to verify (40)
+## B. Explicit edges to verify (52)
 
 For each, confirm that the later work cites or credits the earlier one in the way the "why" says.
 
@@ -85,8 +90,20 @@ For each, confirm that the later work cites or credits the earlier one in the wa
 - [ ] **E118** CS014 LISP (1960) -> CS063 MapReduce (2004) (builds_on): The paper says its map and reduce operations were inspired by the primitives of the same names in LISP and other functional languages.
 - [ ] **E119** CS064 Bigtable (2006) -> CS069 Spanner (2012) (builds_on): Spanner stores data in tablets with a design similar to Bigtable's, adding a time-versioned, transactional layer on top.
 - [ ] **E122** G016 Hashcash and Merkle trees (1997) -> CS067 Bitcoin (2008) (builds_on): The Bitcoin paper builds on hash-based proof of work, as in Hashcash, and on timestamp chains secured with Merkle trees.
+- [ ] **E126** G018 LeNet and convolutional networks (1989) -> CS068 AlexNet (2012) (builds_on): AlexNet is a convolutional network in the line LeCun's group built for handwritten digits, scaled up with GPUs, more data and new training tricks.
+- [ ] **E128** CS068 AlexNet (2012) -> CS072 ResNet (2015) (overcomes_limit): ResNet's shortcut connections fix the problem that made very deep networks harder to train than shallower ones, the obstacle that AlexNet-style networks had run into.
+- [ ] **E129** CS048 Backpropagation (1986) -> CS070 GANs (2014) (builds_on): Both networks in a GAN are trained by backpropagation, the method that made multilayer networks learnable.
+- [ ] **E131** CS072 ResNet (2015) -> CS075 Transformer (2017) (builds_on): The Transformer wraps each of its sublayers in a residual connection, the technique introduced for very deep image networks.
+- [ ] **E132** G019 LSTM (1997) -> CS075 Transformer (2017) (overcomes_limit): The Transformer removes the step-by-step recurrence of LSTM networks, which limited parallel training and made long-range dependencies hard to learn.
+- [ ] **E133** G020 Sequence-to-sequence with attention (2014) -> CS075 Transformer (2017) (builds_on): The Transformer builds directly on the attention mechanism introduced for sequence-to-sequence translation, and makes attention the whole model.
+- [ ] **E134** CS075 Transformer (2017) -> CS076 BERT (2018) (builds_on): BERT is built from the Transformer's encoder, trained to predict masked words using context from both sides.
+- [ ] **E135** CS075 Transformer (2017) -> CS077 GPT-3 (2020) (builds_on): GPT-3 is a Transformer decoder scaled to 175 billion parameters and trained to predict the next word.
+- [ ] **E136** CS076 BERT (2018) -> CS077 GPT-3 (2020) (overcomes_limit): GPT-3 aims to avoid the task-specific fine-tuning data that BERT-style pretrained models still need, by learning tasks from a few examples in the prompt.
+- [ ] **E137** CS077 GPT-3 (2020) -> CS078 Codex (2021) (new_domain): Codex is a GPT language model fine-tuned on code, applying the same approach to programming.
+- [ ] **E138** CS078 Codex (2021) -> CS079 SWE-bench (2023) (builds_on): SWE-bench was built because benchmarks of the kind Codex introduced, small self-contained functions, no longer tested what models could do on real repositories.
+- [ ] **E140** CS058 Paxos (1998) -> CS073 Borg (2015) (builds_on): Borgmaster keeps its state in a Paxos-based replicated store, so the cluster manager survives machine failures.
 
-## C. Interpretive edges to read (85)
+## C. Interpretive edges to read (92)
 
 - [ ] **E011** CS005 Switching circuits (1938) -> CS007 EDVAC report (1945) (builds_on): Boolean switch algebra became the standard way to design the logic of digital machines, the circuits that EDVAC-style computers are made of.
 - [ ] **E012** CS005 Switching circuits (1938) -> CS008 Information theory (1948) (builds_on): Shannon moved from the algebra of two-valued switches to the mathematics of two-valued information, carrying the binary view from circuits to messages.
@@ -173,6 +190,13 @@ For each, confirm that the later work cites or credits the earlier one in the wa
 - [ ] **E123** CS008 Information theory (1948) -> CS065 Differential privacy (2006) (builds_on): Differential privacy puts a precise bound on how much an answer can reveal about one person, a definition in the formal, information-theoretic style Shannon began.
 - [ ] **E124** CS057 PageRank (1998) -> CS063 MapReduce (2004) (builds_on): MapReduce was built partly to compute Google's search index and other large computations over crawled web pages.
 - [ ] **E125** CS042 Logical clocks (1978) -> CS066 Dynamo (2007) (builds_on): Dynamo uses vector clocks, a refinement of Lamport's logical clocks, to track versions of an item across replicas.
+- [ ] **E127** CS055 Support vector machines (1995) -> CS068 AlexNet (2012) (overcomes_limit): On ImageNet, features learned by a deep network beat the support-vector machines on hand-designed features that had topped earlier contests.
+- [ ] **E130** CS027 Relational model (1970) -> CS069 Spanner (2012) (builds_on): Spanner brings the relational model's schemas and SQL queries back to a database that spans the globe.
+- [ ] **E139** CS050 No Silver Bullet (1987) -> CS079 SWE-bench (2023) (builds_on): SWE-bench tests models on the tangled, changing real-world work of maintaining software, the kind of essential complexity Brooks said no single tool removes.
+- [ ] **E141** CS063 MapReduce (2004) -> CS073 Borg (2015) (builds_on): Borg runs MapReduce batch jobs alongside user-facing services on the same machines, which is what made sharing a cluster worthwhile.
+- [ ] **E142** CS073 Borg (2015) -> CS074 Site reliability eng. (2016) (builds_on): The SRE book describes running Google's services on Borg, whose automation of scheduling, restarts and placement makes operating at that scale possible.
+- [ ] **E143** CS060 Agile manifesto (2001) -> CS074 Site reliability eng. (2016) (builds_on): SRE carries the agile emphasis on feedback, small changes and automation into the running of live services.
+- [ ] **E144** CS042 Logical clocks (1978) -> CS071 Raft (2014) (builds_on): Raft is a replicated state machine, the idea from Lamport's clocks paper that replicas applying the same commands in the same order stay identical.
 
 ## D. Claims by paper
 
@@ -538,6 +562,75 @@ For each, confirm that the later work cites or credits the earlier one in the wa
 - [ ] The network launched in January 2009
 - [ ] E077 (public-key cryptography) and E089 (Byzantine generals) are interpretive
 
+### CS068 AlexNet (2012)
+- [ ] Krizhevsky, Sutskever and Hinton, NIPS 2012; 8 learned layers (5 convolutional, 3 fully connected), about 60 million parameters, two GPUs
+- [ ] Top-5 error 15.3% versus 26.2% for the runner-up in the 2012 ImageNet challenge
+- [ ] Turing Award 2018 (Hinton, Bengio, LeCun)
+- [ ] E126 (LeNet to AlexNet) is tagged explicit: the paper builds on LeCun's convolutional networks; verify
+- [ ] E095 (backpropagation) and E127 (SVMs overtaken) are interpretive
+
+### CS069 Spanner (2012)
+- [ ] Corbett et al., OSDI 2012; TrueTime uses GPS and atomic clocks, with uncertainty of a few milliseconds
+- [ ] Spanner uses Paxos for replication (basis for E110, tagged explicit) and Bigtable-like tablets (E119, tagged explicit); verify both against the paper
+- [ ] CockroachDB and YugabyteDB are Spanner-inspired; Cloud Spanner is Google's service
+- [ ] E084, E121 and E130 are interpretive
+
+### CS070 GANs (2014)
+- [ ] Goodfellow et al., NIPS 2014; the minimax game and its ideal solution are in the paper
+- [ ] Both networks are trained by backpropagation (basis for E129, tagged explicit)
+- [ ] Diffusion models later displaced GANs for much image generation: a common account, not the paper's claim
+
+### CS071 Raft (2014)
+- [ ] Ongaro and Ousterhout, USENIX ATC 2014; user study with students comparing Raft and Paxos
+- [ ] E109 (Paxos to Raft) is tagged explicit: Raft's stated aim is to be more understandable than Paxos; E144 (logical clocks to Raft) is interpretive
+- [ ] etcd, Consul and CockroachDB use Raft: public documentation
+
+### CS072 ResNet (2015)
+- [ ] He, Zhang, Ren and Sun, CVPR 2015 (Microsoft Research); 152 layers; 3.6% top-5 error at ILSVRC 2015; human rate often quoted at about 5%
+- [ ] The degradation problem is the paper's framing
+- [ ] E128 (AlexNet to ResNet) is tagged explicit; verify the paper's framing against earlier deep networks
+- [ ] 'Among the most cited papers in all of science' is a common claim from citation counts
+
+### CS073 Borg (2015)
+- [ ] Verma et al., EuroSys 2015; Borgmaster replicated five times with a Paxos-based store (basis for E140, tagged explicit)
+- [ ] Kubernetes was released by Google in 2014 and was influenced by Borg
+- [ ] Over-commitment, priorities and preemption are described in the paper
+- [ ] E141 (MapReduce workloads) and E142 (to the SRE book) are interpretive
+
+### CS074 Site reliability eng. (2016)
+- [ ] Beyer, Jones, Petoff and Murphy (eds.), O'Reilly 2016; follow-ups: the SRE Workbook (2018) and Building Secure and Reliable Systems (2020)
+- [ ] The 50% limit on toil, service level objectives, error budgets and blameless postmortems are central ideas of the book
+- [ ] E142 (Borg to the SRE book) and E143 (Agile to SRE) are interpretive
+
+### CS075 Transformer (2017)
+- [ ] Vaswani et al., NIPS 2017; self-attention, multi-head attention, positional encodings, residual connections; trained on WMT English-German and English-French
+- [ ] The paper builds on attention for sequence-to-sequence translation (basis for ghost G020 and E133, tagged explicit) and contrasts itself with recurrent models such as LSTMs (ghost G019, E132, tagged explicit); verify
+- [ ] The residual connection comes from ResNet (E131, tagged explicit)
+- [ ] E134, E135 (to BERT and GPT-3) are tagged explicit
+
+### CS076 BERT (2018)
+- [ ] Devlin, Chang, Lee and Toutanova (Google), NAACL 2019 (arXiv 2018); masked language modelling and next-sentence prediction; 11 tasks
+- [ ] Google announced using BERT in Search in 2019
+- [ ] E134 (Transformer to BERT) is tagged explicit
+
+### CS077 GPT-3 (2020)
+- [ ] Brown et al., NeurIPS 2020 (OpenAI); 175 billion parameters; zero-, one- and few-shot evaluation
+- [ ] The paper discusses fine-tuning versus few-shot learning and cites BERT-style models (basis for E136, tagged explicit)
+- [ ] The ChatGPT and RLHF remarks are about later work, not this paper
+- [ ] E135 (Transformer to GPT-3) is tagged explicit
+
+### CS078 Codex (2021)
+- [ ] Chen et al. (OpenAI), arXiv 2021; Codex is GPT fine-tuned on public GitHub code; HumanEval has 164 problems; pass@k
+- [ ] The largest Codex model: about 28.8% at pass@1 and about 72.3% at pass@100 (as reported); GPT-3 solved essentially none
+- [ ] GitHub Copilot launched in 2021
+- [ ] E137 (GPT-3 to Codex) is tagged explicit; E138 (to SWE-bench) is tagged explicit
+
+### CS079 SWE-bench (2023)
+- [ ] Jimenez et al., 2023 (arXiv, ICLR 2024); 2,294 task instances from 12 Python repositories; the best model at the time, Claude 2, resolved about 1.96%
+- [ ] SWE-bench Verified is a later human-validated subset
+- [ ] Statements about rapid later progress and leaderboards are a common account, not claims of the paper
+- [ ] E138 (Codex to SWE-bench) is tagged explicit; E139 (No Silver Bullet) is interpretive
+
 ## E. Facts stated in the text that are worth a quick check
 
 - [ ] **CS001**: Russell found his paradox in 1901; Principia has three volumes (1910-1913); the Logic Theorist (1956) proved theorems from its chapter 2
@@ -605,3 +698,15 @@ For each, confirm that the later work cites or credits the earlier one in the wa
 - [ ] **CS065**: Dwork, ICALP 2006; epsilon and the factor e^epsilon; sensitivity and noise; composition; the 2020 US Census
 - [ ] **CS066**: SOSP 2007; consistent hashing, N/R/W quorums, hinted handoff, vector clocks, gossip, Merkle-tree anti-entropy; Cassandra, Riak, Voldemort
 - [ ] **CS067**: Nakamoto 2008; proof of work, longest chain; launched January 2009; cites Hashcash, Merkle and Haber-Stornetta
+- [ ] **CS068**: Krizhevsky, Sutskever and Hinton, NIPS 2012; 8 learned layers (5 convolutional, 3 fully connected), about 60 million parameters, two GPUs; ReLU, dropout, augmentation; 15.3% versus 26.2% top-5 error
+- [ ] **CS069**: Corbett et al., OSDI 2012; Paxos-replicated shards, two-phase commit, TrueTime intervals and commit wait; external consistency; CockroachDB, YugabyteDB, Cloud Spanner
+- [ ] **CS070**: Goodfellow et al., NIPS 2014; generator and discriminator trained as a minimax game; both trained with backpropagation; diffusion models later overtook GANs
+- [ ] **CS071**: Ongaro and Ousterhout, USENIX ATC 2014; leader election, log replication, safety; student user study; etcd, Consul, CockroachDB
+- [ ] **CS072**: He, Zhang, Ren, Sun (Microsoft Research), CVPR 2015; degradation problem; residual learning; 152 layers; 3.6% top-5 error versus about 5% human
+- [ ] **CS073**: Verma et al., EuroSys 2015; Borgmaster replicated five times with a Paxos-based store; priorities, preemption, over-commitment; Kubernetes (2014)
+- [ ] **CS074**: Beyer, Jones, Petoff, Murphy (O'Reilly 2016); SLOs, error budgets, toil limited to 50%, blameless postmortems; the Workbook (2018) and Building Secure and Reliable Systems (2020)
+- [ ] **CS075**: Vaswani et al., NIPS 2017; self-attention, multi-head attention, positional encoding, residual connections; WMT English-German and English-French results
+- [ ] **CS076**: Devlin, Chang, Lee, Toutanova; arXiv 2018, NAACL 2019; masked language modelling (15% of words), next-sentence prediction; 11 tasks; Google Search 2019
+- [ ] **CS077**: Brown et al., NeurIPS 2020 (OpenAI); 175 billion parameters; zero-, one- and few-shot evaluation; in-context learning
+- [ ] **CS078**: Chen et al. (OpenAI) 2021; Codex fine-tuned from GPT on GitHub code; HumanEval 164 problems; pass@k; GitHub Copilot
+- [ ] **CS079**: Jimenez et al. 2023; 2,294 issues from 12 Python repositories; tests that must pass; Claude 2 resolving about 1.96%; SWE-bench Verified came later
