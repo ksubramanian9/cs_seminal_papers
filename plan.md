@@ -13,14 +13,23 @@ Walking skeleton first: render all 79 nodes with era bands and selection highlig
 - **M2: done and approved by the author** (template and tone accepted). The slice was CS001-CS014 (eras E1 and E2).
 - **M3a (era E3, 1962-1969, CS015-CS026): done.** The author reviewed it: raised the ghost cap, kept the evidence approach, approved the forward-pointing edges, and said not to trim the density.
 - **M3b (era E4, 1970-1979, CS027-CS043): done and committed.**
-- **M3c (era E5, 1980-1994, CS044-CS054): built, awaiting a short review** (see "M3c review" below). 54 of 79 papers are now authored.
-- M3d-M3e (E6 and E7, 25 papers): not started.
+- **M3c (era E5, 1980-1994, CS044-CS054): done and committed.**
+- **M3d (era E6, 1995-2008, CS055-CS067): built, awaiting a short review** (see "M3d review" below). 67 of 79 papers are now authored.
+- M3e (E7, 2009-2023, CS068-CS079, 12 papers): not started. After it, run the validator with `?strict=1` (the project's definition of done).
 - **Tests** (open any through Live Server; the page title reads ALL PASSED, and each page lists every check):
   - `tests/unit.html`: 45 checks (layout, traversal, the validator's rules, and the theme logic).
   - `tests/smoke.html`: 36 checks; mounts the real app on its own page and drives it, and loads the real `index.html` to test the theme toggle.
   - `tests/validate.html`: data integrity (spec section 7). Default is scoped to authored papers; add `?strict=1` for the definition of done (it fails until all 79 are authored and no placeholder edges remain).
 
-### M3c review (author decisions)
+### M3d review (author decisions)
+
+13 explanations (380-441 words), 13 diagrams, 22 new edges (8 explicit), 2 new ghost nodes (Hashcash/Merkle trees and Bellman's dynamic programming; 17 of 20 used). Two placeholders that touched this era (P20 Paxos to Raft, P21 GFS to MapReduce) became real explicit edges, leaving 5, all in M3e. Please skim a few (suggested: CS058 Paxos, CS061 CAP, CS067 Bitcoin) and the link lists.
+
+1. **Explicit edges to verify.** Eight are tagged explicit; E109 (Paxos to Raft), E110 (Paxos to Spanner) and E119 (Bigtable to Spanner) point at papers M3e will author. They are listed in `content/REVIEW_QUEUE.md`, section A.
+2. **Ghost budget.** 17 of 20 used. M3e will likely use LSTM and sequence-to-sequence models (19), leaving one spare.
+3. **Statements about later history** (what happened to MapReduce, who adopted differential privacy, what Dynamo inspired) are from memory and flagged in the queue.
+
+### M3c review (resolved)
 
 11 explanations (383-431 words), 11 diagrams, 17 new edges (3 explicit: Pnueli to model checking, Perceptron to backpropagation, Alexander to Design Patterns), 3 new ghost nodes (Perceptron, Alexander, Pnueli; 15 in total, cap 20). Two placeholders that touched this era (P19, P23) became real edges, leaving 7. Please skim a few (suggested: CS045 Byzantine generals, CS048 backpropagation, CS054 Design Patterns) and the link lists.
 

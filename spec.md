@@ -97,7 +97,7 @@ Edge type meanings:
 
 `{ id, year, title, lane, blurb }`. Ghost nodes are greyed, not clickable into a full panel, and show only a tooltip with the blurb. They may be the `from` end of an edge, but never the `to` end. Proposed (author approves before use):
 
-In use so far (15): Boole, *Laws of Thought* (1854); Frege, *Begriffsschrift* (1879); Hilbert's decision problem (1928); ENIAC (1945); Wiener, *Cybernetics* (1948); Bush, *As We May Think* (1945); the ALGOL 60 report (1960); the transistor and integrated circuit (1947); Multics (1965); IMS and CODASYL databases (1968); Simula 67 (1967); ARPANET (1969); the Perceptron (1958); Alexander, *A Pattern Language* (1977); Pnueli's temporal logic of programs (1977). Still proposed, not yet used (3): Hashcash/Merkle trees (precursors to Bitcoin); LSTM (1997); sequence-to-sequence models (2014). That would reach 18, within the cap of 20 (raised from 12 by the author after M3a).
+In use so far (17): Boole, *Laws of Thought* (1854); Frege, *Begriffsschrift* (1879); Hilbert's decision problem (1928); ENIAC (1945); Wiener, *Cybernetics* (1948); Bush, *As We May Think* (1945); the ALGOL 60 report (1960); the transistor and integrated circuit (1947); Multics (1965); IMS and CODASYL databases (1968); Simula 67 (1967); ARPANET (1969); the Perceptron (1958); Alexander, *A Pattern Language* (1977); Pnueli's temporal logic of programs (1977); Hashcash and Merkle trees (1997); Bellman's dynamic programming (1957). Still proposed, not yet used (2): LSTM (1997); sequence-to-sequence models (2014). That would reach 19, within the cap of 20 (raised from 12 by the author after M3a), leaving one spare.
 
 ### 4.5 `eras.json`
 

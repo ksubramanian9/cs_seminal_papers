@@ -1,4 +1,4 @@
-# Review queue: CS001-CS054 (M2, M3a, M3b and M3c)
+# Review queue: CS001-CS067 (M2, M3a, M3b, M3c and M3d)
 
 Claims written from knowledge that you should spot-check against the sources. Tick an item once checked; if it is wrong, say so and I will fix the text and the data. Nothing here has been verified against the original papers.
 
@@ -33,8 +33,15 @@ Claims written from knowledge that you should spot-check against the sources. Ti
 - [ ] **CS051.** The manager's note "Vague but exciting" and CERN's 1993 release of the Web technology are widely reported but from memory.
 - [ ] **CS044.** The text says model checking is used at Intel, Microsoft and Amazon; please confirm you are comfortable with those names, or I can make it generic.
 - [ ] **CS049 and CS054 on later influence.** Statements that Google's systems and Hadoop follow shared-nothing, and that patterns compensate for language gaps, are common accounts, not claims in those papers.
+- [ ] **Ghost nodes added in M3d (1995-2008):** Hashcash and Merkle trees (1997); Bellman, dynamic programming (1957). That makes 17 (cap 20). Still proposed: LSTM and sequence-to-sequence models, which would make 19.
+- [ ] **Explicit edges in M3d that need a citation check:** E106 (Bellman to the RL book), E109 (Paxos to Raft), E110 (Paxos to Spanner), E116 (GFS to MapReduce), E117 (GFS to Bigtable), E118 (LISP to MapReduce), E119 (Bigtable to Spanner), E122 (Hashcash and Merkle trees to Bitcoin). E109, E110 and E119 point at papers not authored yet (Raft, Spanner).
+- [ ] **CS058 dates.** Lamport wrote the paper around 1989-90 and it was published in 1998; the CSV and the canvas use 1998.
+- [ ] **CS063 on later history.** "Google moved most of its work to other systems a few years later" and the remark that database researchers criticised MapReduce are from memory.
+- [ ] **CS065 deployments.** The 2020 US Census and the Apple, Google and Microsoft uses are from public announcements, remembered; the original paper predates them.
+- [ ] **CS066 influence.** Statements that Dynamo was the model for Cassandra, Riak and Voldemort, and led to DynamoDB, are common accounts; DynamoDB has a different internal design.
+- [ ] **CS059 and CS060.** The Chrysler C3 origin of XP, the 2004 second edition, and the seventeen signatories at Snowbird, Utah are from memory.
 
-## B. Explicit edges to verify (32)
+## B. Explicit edges to verify (40)
 
 For each, confirm that the later work cites or credits the earlier one in the way the "why" says.
 
@@ -70,8 +77,16 @@ For each, confirm that the later work cites or credits the earlier one in the wa
 - [ ] **E087** G015 Pnueli: temporal logic of programs (1977) -> CS044 Model checking (1981) (builds_on): Clarke and Emerson build on Pnueli's use of temporal logic to state properties of concurrent programs, adding a branching-time variant that can be checked automatically.
 - [ ] **E093** G013 The Perceptron (1958) -> CS048 Backpropagation (1986) (overcomes_limit): Backpropagation trains networks with hidden layers, overcoming the limits of single-layer perceptrons that Minsky and Papert had stressed.
 - [ ] **E102** G014 Alexander: A Pattern Language (1977) -> CS054 Design patterns (1994) (builds_on): The book borrows the idea of a pattern language from Christopher Alexander's architecture, crediting him for the form of a pattern: a problem, a context and a proven solution.
+- [ ] **E106** G017 Bellman: dynamic programming (1957) -> CS056 Reinforcement learning (1998) (builds_on): The book builds reinforcement learning on Bellman's dynamic programming, which supplies its equations for the value of a state.
+- [ ] **E109** CS058 Paxos (1998) -> CS071 Raft (2014) (overcomes_limit): Raft was designed explicitly as a consensus algorithm easier to understand than Paxos, which its authors found hard to teach and to build systems on.
+- [ ] **E110** CS058 Paxos (1998) -> CS069 Spanner (2012) (builds_on): Spanner uses Paxos to replicate each piece of its data across machines and datacenters.
+- [ ] **E116** CS062 Google File System (2003) -> CS063 MapReduce (2004) (builds_on): MapReduce reads its input from, and writes its output to, the Google File System.
+- [ ] **E117** CS062 Google File System (2003) -> CS064 Bigtable (2006) (builds_on): Bigtable stores its data and logs in the Google File System.
+- [ ] **E118** CS014 LISP (1960) -> CS063 MapReduce (2004) (builds_on): The paper says its map and reduce operations were inspired by the primitives of the same names in LISP and other functional languages.
+- [ ] **E119** CS064 Bigtable (2006) -> CS069 Spanner (2012) (builds_on): Spanner stores data in tablets with a design similar to Bigtable's, adding a time-versioned, transactional layer on top.
+- [ ] **E122** G016 Hashcash and Merkle trees (1997) -> CS067 Bitcoin (2008) (builds_on): The Bitcoin paper builds on hash-based proof of work, as in Hashcash, and on timestamp chains secured with Merkle trees.
 
-## C. Interpretive edges to read (71)
+## C. Interpretive edges to read (85)
 
 - [ ] **E011** CS005 Switching circuits (1938) -> CS007 EDVAC report (1945) (builds_on): Boolean switch algebra became the standard way to design the logic of digital machines, the circuits that EDVAC-style computers are made of.
 - [ ] **E012** CS005 Switching circuits (1938) -> CS008 Information theory (1948) (builds_on): Shannon moved from the algebra of two-valued switches to the mathematics of two-valued information, carrying the binary view from circuits to messages.
@@ -144,6 +159,20 @@ For each, confirm that the later work cites or credits the earlier one in the wa
 - [ ] **E100** CS051 World Wide Web (1989) -> CS057 PageRank (1998) (builds_on): PageRank treats the web's links as votes, turning the structure of hypertext into a measure of a page's importance.
 - [ ] **E101** G006 Bush: As We May Think (1945) -> CS051 World Wide Web (1989) (builds_on): Linked, shared information was the memex dream; the Web is its networked, public realisation.
 - [ ] **E103** CS007 EDVAC report (1945) -> CS052 Quantitative architecture (1990) (builds_on): Hennessy and Patterson measure designs of the stored-program architecture quantitatively, asking which trade-offs pay off on real programs.
+- [ ] **E104** G013 The Perceptron (1958) -> CS055 Support vector machines (1995) (builds_on): Support-vector networks are linear classifiers like the perceptron, made far more powerful by the maximum-margin principle and the kernel trick.
+- [ ] **E105** CS048 Backpropagation (1986) -> CS055 Support vector machines (1995) (rival): For a decade support-vector machines were the leading rival to multilayer neural networks, with strong guarantees and little tuning.
+- [ ] **E107** CS009 Can machines think? (1950) -> CS056 Reinforcement learning (1998) (builds_on): Turing's child machine, taught by reward and punishment, anticipates the learn-from-feedback idea at the heart of reinforcement learning.
+- [ ] **E108** CS057 PageRank (1998) -> CS062 Google File System (2003) (builds_on): Google's crawling and indexing workloads, which link-based search required, shaped the design of its file system.
+- [ ] **E111** CS050 No Silver Bullet (1987) -> CS059 Extreme Programming (1999) (builds_on): XP's small releases and constant feedback put into practice Brooks's advice to grow software incrementally rather than build it all at once.
+- [ ] **E112** CS059 Extreme Programming (1999) -> CS060 Agile manifesto (2001) (builds_on): The Agile Manifesto came from a meeting of the creators of lightweight methods, and XP's values of communication, feedback and responding to change run through it.
+- [ ] **E113** CS042 Logical clocks (1978) -> CS061 CAP theorem (2002) (builds_on): The CAP proof works in the asynchronous message-passing model that Lamport's work helped define, where delays make a single global order of events unobtainable.
+- [ ] **E114** CS061 CAP theorem (2002) -> CS066 Dynamo (2007) (builds_on): Dynamo chooses availability over consistency, the trade-off CAP says a partitioned system cannot avoid.
+- [ ] **E115** CS049 Shared nothing (1986) -> CS062 Google File System (2003) (builds_on): GFS runs on a cluster of cheap machines that each own their disks, the shared-nothing architecture applied to storage.
+- [ ] **E120** CS027 Relational model (1970) -> CS066 Dynamo (2007) (rival): Dynamo gives up the relational model's rich queries and strict consistency for a simple key-value store that is always available.
+- [ ] **E121** CS066 Dynamo (2007) -> CS069 Spanner (2012) (rival): Dynamo offers availability with eventual consistency; Spanner offers strong consistency across the globe, two answers to the same scaling problem.
+- [ ] **E123** CS008 Information theory (1948) -> CS065 Differential privacy (2006) (builds_on): Differential privacy puts a precise bound on how much an answer can reveal about one person, a definition in the formal, information-theoretic style Shannon began.
+- [ ] **E124** CS057 PageRank (1998) -> CS063 MapReduce (2004) (builds_on): MapReduce was built partly to compute Google's search index and other large computations over crawled web pages.
+- [ ] **E125** CS042 Logical clocks (1978) -> CS066 Dynamo (2007) (builds_on): Dynamo uses vector clocks, a refinement of Lamport's logical clocks, to track versions of an item across replicas.
 
 ## D. Claims by paper
 
@@ -440,6 +469,75 @@ For each, confirm that the later work cites or credits the earlier one in the wa
 - [ ] The book credits Christopher Alexander for the pattern idea (basis for ghost G014 and edge E102, tagged explicit)
 - [ ] E074 (Smalltalk to the book) is tagged explicit: the book draws on Smalltalk examples such as Model-View-Controller; E064 and E098 are interpretive
 
+### CS055 Support vector machines (1995)
+- [ ] Cortes and Vapnik, Machine Learning 1995; the kernel idea goes back to Boser, Guyon and Vapnik (1992)
+- [ ] The soft-margin formulation is introduced in this paper
+- [ ] E104 (Perceptron to SVM) and E105 (backpropagation as the rival) are interpretive
+
+### CS056 Reinforcement learning (1998)
+- [ ] Sutton and Barto, first edition 1998 (MIT Press)
+- [ ] Dopamine neurons and temporal-difference errors: Schultz, Dayan and Montague (1997)
+- [ ] The reinforcement-learning-from-human-feedback remark relates to later practice, not to the book
+- [ ] E106 (Bellman to the book) is tagged explicit; E107 (Turing) is interpretive
+
+### CS057 PageRank (1998)
+- [ ] Brin and Page, WWW7 conference 1998; the paper's appendix on advertising and mixed motives
+- [ ] The PageRank values in the diagram were computed for the small example graph (damping 0.85), not taken from the paper
+- [ ] E100 (Web proposal to PageRank), E108 (to GFS) and E124 (to MapReduce) are interpretive
+
+### CS058 Paxos (1998)
+- [ ] Lamport wrote the paper in 1989-90; it was published in ACM TOCS in 1998; the Fischer-Lynch-Paterson impossibility result is 1985
+- [ ] Chubby (Google's lock service) and Spanner use Paxos (basis for E110, Paxos to Spanner, tagged explicit)
+- [ ] E109 (Paxos to Raft) is tagged explicit: Raft's stated aim is to be easier to understand than Paxos; E083 and E088 are interpretive
+
+### CS059 Extreme Programming (1999)
+- [ ] Beck developed XP on Chrysler's C3 payroll project; first edition 1999, second edition 2004
+- [ ] JUnit grew from the XP and Smalltalk testing community (Beck and Gamma)
+- [ ] The 'cost of change curve' argument is Beck's framing
+- [ ] E111 (Brooks to XP) and E112 (XP to the Agile Manifesto) are interpretive
+
+### CS060 Agile manifesto (2001)
+- [ ] Seventeen signatories met at Snowbird, Utah, in February 2001
+- [ ] The four value statements are quoted in short form; the twelve principles are summarised
+- [ ] E099 (No Silver Bullet to Agile) and E112 (XP to Agile) are interpretive
+- [ ] Statements about later criticism by signatories are a common account, not claims from the manifesto
+
+### CS061 CAP theorem (2002)
+- [ ] Brewer's conjecture was presented in his PODC 2000 keynote; Gilbert and Lynch's proof appeared in SIGACT News 2002
+- [ ] Brewer's later clarification: 'CAP twelve years later' (2012)
+- [ ] PACELC is due to Abadi
+- [ ] E113 (logical clocks to CAP) and E114 (CAP to Dynamo) are interpretive
+
+### CS062 Google File System (2003)
+- [ ] Ghemawat, Gobioff and Leung, SOSP 2003; chunk size 64 MB and three replicas by default
+- [ ] Colossus is described as GFS's successor in later Google material
+- [ ] E115 (shared nothing to GFS) and E108 (PageRank search to GFS) are interpretive; E116 (GFS to MapReduce) and E117 (GFS to Bigtable) are tagged explicit
+
+### CS063 MapReduce (2004)
+- [ ] Dean and Ghemawat, OSDI 2004; the paper says map and reduce were inspired by LISP and other functional languages (basis for E118, tagged explicit)
+- [ ] Hadoop is the open-source implementation; Spark and Dataflow are later systems
+- [ ] E096, E124 are interpretive; E116 (GFS to MapReduce) is tagged explicit
+
+### CS064 Bigtable (2006)
+- [ ] Chang et al., OSDI 2006; data model: row key, column family:qualifier, timestamp
+- [ ] The table in the diagram is a schematic example in the paper's webtable style
+- [ ] E117 (GFS to Bigtable) and E119 (Bigtable to Spanner) are tagged explicit; verify the Spanner paper's statement about Bigtable-like tablets
+
+### CS065 Differential privacy (2006)
+- [ ] Dwork, ICALP 2006; related paper by Dwork, McSherry, Nissim and Smith, 'Calibrating noise to sensitivity' (2006)
+- [ ] The 2020 US Census used differential privacy; the company deployments named are from public announcements
+- [ ] E123 (Shannon to differential privacy) is an interpretive reading
+
+### CS066 Dynamo (2007)
+- [ ] DeCandia et al., SOSP 2007; Dynamo is an internal system; DynamoDB is a later managed service with a different design
+- [ ] Techniques named: consistent hashing, sloppy quorum and hinted handoff, vector clocks, gossip, Merkle-tree anti-entropy
+- [ ] E114, E120, E121 and E125 are interpretive
+
+### CS067 Bitcoin (2008)
+- [ ] Nakamoto's paper cites Hashcash (Back), Merkle trees and Haber and Stornetta's timestamping (basis for ghost G016 and edge E122, tagged explicit)
+- [ ] The network launched in January 2009
+- [ ] E077 (public-key cryptography) and E089 (Byzantine generals) are interpretive
+
 ## E. Facts stated in the text that are worth a quick check
 
 - [ ] **CS001**: Russell found his paradox in 1901; Principia has three volumes (1910-1913); the Logic Theorist (1956) proved theorems from its chapter 2
@@ -494,3 +592,16 @@ For each, confirm that the later work cites or credits the earlier one in the wa
 - [ ] **CS052**: Hennessy (Stanford) and Patterson (Berkeley); the performance equation (instruction count, CPI, cycle time); RISC; Turing Award 2017
 - [ ] **CS053**: Liskov and Wing, TOPLAS 1994; substitution principle first stated 1987; preconditions, postconditions, invariants and history constraints; Turing Award 2008
 - [ ] **CS054**: Gamma, Helm, Johnson, Vlissides (1994); 23 patterns in creational, structural and behavioural groups; two principles (program to an interface; favour composition over inheritance)
+- [ ] **CS055**: Cortes and Vapnik, Machine Learning 1995, at AT&T Bell Labs; maximum margin, support vectors, kernels, soft margin; kernel idea from Boser, Guyon and Vapnik 1992
+- [ ] **CS056**: Sutton and Barto 1998; value functions, Bellman equations; dynamic programming, Monte Carlo and temporal-difference methods; the dopamine remark (Schultz, Dayan, Montague 1997)
+- [ ] **CS057**: Brin and Page, WWW7 1998; random-surfer model; anchor text; the appendix on advertising and mixed motives
+- [ ] **CS058**: Safe under crashes and message loss, live while a majority communicates; written 1989-90, published 1998; Fischer-Lynch-Paterson 1985; used in Chubby and Spanner; Turing Award 2013
+- [ ] **CS059**: Chrysler C3 payroll project; practices (pair programming, test-first, small releases, refactoring, continuous integration, user stories); second edition 2004
+- [ ] **CS060**: Seventeen signatories at Snowbird, Utah, February 2001; four value statements and twelve principles
+- [ ] **CS061**: Brewer PODC 2000 keynote; Gilbert and Lynch proof 2002; "CAP twelve years later" 2012; PACELC (Abadi)
+- [ ] **CS062**: SOSP 2003; 64 MB chunks; three replicas by default; single master; Colossus as successor; relation to Hadoop HDFS
+- [ ] **CS063**: OSDI 2004; map and reduce inspired by LISP; Hadoop; Spark and Dataflow; skew
+- [ ] **CS064**: OSDI 2006; data model row, column family and qualifier, timestamp; SSTables, tablets, Chubby; HBase and Cassandra inspired by it
+- [ ] **CS065**: Dwork, ICALP 2006; epsilon and the factor e^epsilon; sensitivity and noise; composition; the 2020 US Census
+- [ ] **CS066**: SOSP 2007; consistent hashing, N/R/W quorums, hinted handoff, vector clocks, gossip, Merkle-tree anti-entropy; Cassandra, Riak, Voldemort
+- [ ] **CS067**: Nakamoto 2008; proof of work, longest chain; launched January 2009; cites Hashcash, Merkle and Haber-Stornetta
