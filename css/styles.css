@@ -311,3 +311,45 @@ button.link-body:hover, button.link-body:focus-visible { background: var(--hover
 .link-blurb { margin: 0; padding: 0 0.7rem 0.6rem; font-size: 0.78rem; color: var(--muted); }
 .metadata .curator { font-size: 0.8rem; color: var(--muted); }
 .chip.tag { background: var(--bg); }
+
+/* ---------- interactive widgets (M4) ---------- */
+.widget { border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem 0.85rem; background: var(--bg); }
+.widget-title { margin: 0 0 0.5rem; font-weight: 700; font-size: 0.9rem; }
+.widget-note { margin: 0.4rem 0; color: var(--muted); font-size: 0.85rem; }
+.widget-error { color: var(--danger-text); background: var(--danger-bg); padding: 0.5rem 0.7rem; border-radius: 6px; }
+.widget-inputs { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.5rem; margin-bottom: 0.4rem; }
+.widget-inputs label { font-size: 0.8rem; color: var(--muted); }
+.widget-inputs input {
+  width: 8.5rem; padding: 0.25rem 0.45rem; font: 0.9rem ui-monospace, Consolas, "Courier New", monospace;
+  color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+}
+.widget-inputs input[aria-invalid="true"] { border-color: var(--danger-text); }
+.widget-hint { flex-basis: 100%; font-size: 0.72rem; color: var(--muted); }
+.widget-input-error { margin: 0 0 0.4rem; font-size: 0.8rem; font-weight: 600; color: var(--danger-text); }
+.widget-input-error[hidden] { display: none; }
+.widget-stage { margin: 0.3rem 0; }
+.widget-status { min-height: 2.9em; margin: 0.3rem 0 0.5rem; font-size: 0.85rem; line-height: 1.4; color: var(--text-soft); }
+.widget-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; }
+.widget-counter { margin-left: auto; font-size: 0.75rem; color: var(--muted); }
+.widget-btn {
+  padding: 0.28rem 0.7rem; font: 600 0.8rem var(--font); color: var(--text);
+  background: var(--surface); border: 1px solid var(--border); border-radius: 6px; cursor: pointer;
+}
+.widget-btn:hover:not(:disabled) { background: var(--hover); }
+.widget-btn:focus-visible, .widget-inputs input:focus-visible { outline: 2px solid var(--anc); outline-offset: 2px; }
+.widget-btn:disabled { opacity: 0.45; cursor: default; }
+.widget-caption { margin: 0.6rem 0 0; font-size: 0.78rem; line-height: 1.45; color: var(--muted); }
+
+/* Turing machine model */
+.tm-tape { display: block; width: 100%; height: auto; }
+.tm-cell { fill: var(--surface); stroke: var(--tick); stroke-width: 1.5; }
+.tm-cell.head { fill: var(--hover-link); stroke: var(--anc); stroke-width: 2.6; }
+.tm-sym { font: 700 18px ui-monospace, Consolas, "Courier New", monospace; fill: var(--text); }
+.tm-sym.blank { fill: var(--muted); font-weight: 400; }
+.tm-head { fill: var(--anc); }
+.tm-state { font: 700 12px var(--font); fill: var(--anc); }
+.tm-rules { width: 100%; margin-top: 0.4rem; border-collapse: collapse; font-size: 0.78rem; }
+.tm-rules th, .tm-rules td { padding: 0.2rem 0.4rem; text-align: left; border-bottom: 1px solid var(--border); }
+.tm-rules th { color: var(--muted); font-weight: 600; text-transform: uppercase; font-size: 0.68rem; letter-spacing: 0.03em; }
+.tm-rules td { font-family: ui-monospace, Consolas, "Courier New", monospace; }
+.tm-rules tr.active td { background: var(--hover-link); color: var(--text); font-weight: 700; }

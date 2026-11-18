@@ -46,6 +46,12 @@ const results = validateData(data, { strict });
     try {
       const res = await fetch(new URL('../' + f.path, import.meta.url), { cache: 'no-cache' });
       if (!res.ok) problems.push(`${f.id}: ${f.kind} ${f.path} (HTTP ${res.status})`);
+      else if (f.kind === 'widget config') {
+        let cfg = null;
+        try { cfg = await res.json(); } catch { problems.push(`${f.id}: ${f.path} is not valid JSON`); }
+        if (cfg && (typeof cfg.model !== 'string' || !cfg.model)) problems.push(`${f.id}: ${f.path} must name a "model"`);
+        if (cfg && typeof cfg.caption !== 'string') problems.push(`${f.id}: ${f.path} needs a one-line "caption"`);
+      }
       else if (f.path.endsWith('.svg')) {
         const txt = await res.text();
         if (!/<svg[\s>]/.test(txt)) problems.push(`${f.id}: ${f.path} is not an SVG`);

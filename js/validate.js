@@ -9,6 +9,7 @@
  */
 
 import { EDGE_TYPES, EVIDENCE } from './data.js';
+import { WIDGET_TYPE_NAMES } from './widgets/types.js';
 
 export const WORDS_MIN = 300;      // hard limits for the five explanation sections combined
 export const WORDS_MAX = 500;
@@ -56,8 +57,16 @@ export function validateData(data, { strict = false } = {}) {
       else if (words < WORDS_TARGET[0] || words > WORDS_TARGET[1]) warnings.push(`${id}: ${words} words (target ${WORDS_TARGET[0]}-${WORDS_TARGET[1]})`);
       if (!String(ex.diagram ?? '').trim()) problems.push(`${id}: no diagram`);
       if (!String(ex.diagram_alt ?? '').trim()) problems.push(`${id}: no diagram_alt text`);
+      if (ex.widget != null) {
+        const w = ex.widget;
+        if (typeof w !== 'object' || !WIDGET_TYPE_NAMES.includes(w.type)) {
+          problems.push(`${id}: widget type must be one of ${WIDGET_TYPE_NAMES.join(', ')}`);
+        } else if (!String(w.config ?? '').trim()) {
+          problems.push(`${id}: widget has no config file`);
+        }
+      }
     }
-    add('R2', 'Explanations: all five sections, 300-500 words, diagram with alt text', problems, warnings);
+    add('R2', 'Explanations: all five sections, 300-500 words, diagram with alt text, valid widget declaration', problems, warnings);
   }
 
   /* R3 every (authored) paper has at least one edge */

@@ -48,6 +48,10 @@
   "left_open": "A Turing machine says what is computable in principle, not what is computable efficiently or in reasonable time. It is a mathematical idealisation with an endless tape, not a blueprint for building a machine. And the Church–Turing thesis can never be proved, because “effectively calculable” is an informal idea. Questions of cost, how many steps and how much memory, would need a new theory.",
   "diagram": "diagrams/CS004.svg",
   "diagram_alt": "A tape of cells holding symbols, with a read-write head over one cell and a box showing the machine's current state, plus one rule: in state q2 reading 1, write 0, move right, go to state q3.",
+  "widget": {
+   "type": "stepper",
+   "config": "widgets/turing.json"
+  },
   "review": [
    "Turing's paper proves an undecidability result for 'circle-free' machines; the halting-problem phrasing came later, so the text says 'closely related to whether it will ever stop'",
    "Equivalence with lambda-definability was shown in Turing's 1937 follow-up and a note appended to the paper"

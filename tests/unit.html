@@ -17,6 +17,10 @@
 import { makeXScale, stackNodes, computeLayout, radiusFor, ROW_H, X_SEGMENTS } from '../js/layout.js';
 import { validateData, wordCount, requiredFiles } from '../js/validate.js';
 import { resolveTheme, createThemeToggle, safeStorage } from '../js/theme.js';
+import { run as tmRun, validate as tmValidate, inputs as tmInputs } from '../js/widgets/models/turing.js';
+import { createStepperState } from '../js/widgets/stepper-state.js';
+import { WIDGET_TYPE_NAMES } from '../js/widgets/types.js';
+import { setTimer, clearTimer, widgetStats } from '../js/widgets/registry.js';
 import { buildIndex, ancestors, descendants, rivals } from '../js/traverse.js';
 
 const results = [];
@@ -291,6 +295,105 @@ test('validate: wordCount and requiredFiles', () => {
   assert(wordCount('  a  b\nc ') === 3 && wordCount('') === 0 && wordCount(null) === 0);
   const f = requiredFiles({ explanations: { A: { diagram: 'diagrams/A.svg', widget: { config: 'widgets/a.json' } }, B: {} } });
   assert(f.length === 2 && f[0].path === 'diagrams/A.svg');
+});
+
+/* ---------- widgets: Turing model, stepper state, registry, validator ---------- */
+const TM = await fetch('../widgets/turing.json').then((r) => r.json());
+const bin = (n) => n.toString(2);
+
+test('widgets: the Turing config is well formed (a rule for every case, a halt state)', () => {
+  assert(TM.model === 'turing' && typeof TM.caption === 'string' && TM.caption.length > 20);
+  assert(TM.rules.length === 3 && TM.haltStates.includes('halt'));
+  for (const sym of ['0', '1', TM.blank]) assert(TM.rules.some((r) => r.state === TM.initialState && r.read === sym), `no rule for ${sym}`);
+  const states = new Set([TM.initialState, ...TM.haltStates]);
+  assert(TM.rules.every((r) => states.has(r.next)), 'every rule leads to a known state');
+});
+test('widgets: the Turing machine adds 1 to every number from 0 to 255 (exhaustive)', () => {
+  for (let n = 0; n <= 255; n++) {
+    const r = tmRun(TM, bin(n));
+    assert(r.halted && !r.stuck && !r.truncated, `${bin(n)} did not halt cleanly`);
+    assert(r.output === bin(n + 1), `${bin(n)} -> ${r.output}, want ${bin(n + 1)}`);
+  }
+});
+test('widgets: leading zeros are kept, and all-ones grows the tape to the left', () => {
+  assert(tmRun(TM, '0011').output === '0100');
+  const r = tmRun(TM, '111');
+  assert(r.output === '1000' && r.frames.at(-1).tape.has(-1), 'a new cell appears left of the input');
+});
+test('widgets: frames start at the rightmost digit and each step changes at most one cell and moves at most one place', () => {
+  const r = tmRun(TM, '1011');
+  const f0 = r.frames[0];
+  assert(f0.step === 0 && f0.head === 3 && f0.state === 'carry' && f0.rule === null);
+  for (let i = 1; i < r.frames.length; i++) {
+    const a = r.frames[i - 1], b = r.frames[i];
+    const changed = [...new Set([...a.tape.keys(), ...b.tape.keys()])].filter((k) => (a.tape.get(k) ?? '_') !== (b.tape.get(k) ?? '_'));
+    assert(changed.length <= 1, `step ${i} changed ${changed.length} cells`);
+    assert(Math.abs(b.head - a.head) <= 1 && b.step === a.step + 1 && b.rule !== null);
+  }
+  assert(r.frames.length === 4, 'adding 1 to 1011 takes 3 steps (4 frames)');
+});
+test('widgets: the display window covers every visited cell and is at least 9 cells wide', () => {
+  for (const s of ['0', '1', '111', '10110111']) {
+    const r = tmRun(TM, s);
+    assert(r.hi - r.lo + 1 >= 9, `${s}: window too small`);
+    for (const f of r.frames) assert(f.head >= r.lo && f.head <= r.hi && [...f.tape.keys()].every((k) => k >= r.lo && k <= r.hi), `${s}: cell outside window`);
+  }
+});
+test('widgets: a machine with a missing rule is reported as stuck, not as halted', () => {
+  const broken = { ...TM, rules: TM.rules.filter((r) => !(r.read === '0')) };
+  const r = tmRun(broken, '10');
+  assert(r.stuck && !r.halted && /No rule applies/.test(r.frames.at(-1).note));
+});
+test('widgets: a machine that never halts is cut off at maxSteps instead of hanging', () => {
+  const loop = { ...TM, maxSteps: 20, rules: [{ state: 'carry', read: '1', write: '1', move: 'R', next: 'carry' }, { state: 'carry', read: '_', write: '1', move: 'R', next: 'carry' }] };
+  const r = tmRun(loop, '1');
+  assert(r.truncated && !r.halted && r.frames.length <= 22 && /Stopped after 20 steps/.test(r.frames.at(-1).note));
+});
+test('widgets: input validation rejects empty, non-binary and over-long input', () => {
+  assert(tmValidate({ tape: '1011' }, TM) === null && tmValidate({ tape: '0' }, TM) === null);
+  assert(tmValidate({ tape: '' }, TM) && tmValidate({ tape: '   ' }, TM));
+  assert(tmValidate({ tape: 'abc' }, TM) && tmValidate({ tape: '102' }, TM) && tmValidate({ tape: '1 0' }, TM));
+  assert(tmValidate({ tape: '123456789' }, TM) === 'Use only the digits 0 and 1.', 'digits checked before length');
+  assert(tmValidate({ tape: '111111111' }, TM) === 'Use at most 8 digits.');
+  assert(tmInputs(TM)[0].value === TM.input && tmInputs(TM)[0].maxLength === 8);
+});
+test('widgets: hostile input text is rejected by validation, so it can never reach the page', () => {
+  for (const s of ['<img src=x onerror=1>', '1011<script>', '"><b>', '1\n0']) assert(tmValidate({ tape: s }, TM) !== null, s);
+});
+test('widgets: stepper state stays within bounds and resets', () => {
+  const s = createStepperState(3);
+  assert(s.index === 0 && s.atStart && !s.atEnd && s.count === 3);
+  assert(s.back() === false && s.index === 0, 'cannot go before the start');
+  assert(s.next() && s.next() && s.index === 2 && s.atEnd);
+  assert(s.next() === false && s.index === 2, 'cannot go past the end');
+  assert(s.back() && s.index === 1);
+  s.reset(); assert(s.index === 0);
+  s.next(); s.setCount(5); assert(s.count === 5 && s.index === 0, 'setCount returns to the start');
+  assert(createStepperState(0).count === 1 && createStepperState(1).atEnd && createStepperState(1).atStart, 'a single frame is both start and end');
+});
+test('widgets: the registry counts timers and they return to zero when cleared or fired', async () => {
+  const before = widgetStats().timers;
+  const a = setTimer(() => {}, 10000), b = setTimer(() => {}, 10000);
+  assert(widgetStats().timers === before + 2);
+  clearTimer(a); clearTimer(a); // clearing twice is harmless
+  assert(widgetStats().timers === before + 1);
+  clearTimer(b);
+  assert(widgetStats().timers === before);
+  let fired = 0; setTimer(() => { fired++; }, 5);
+  await new Promise((r) => setTimeout(r, 60));
+  assert(fired === 1 && widgetStats().timers === before, 'a fired timer is no longer pending');
+  clearTimer(null); clearTimer(undefined); // harmless
+});
+test('widgets: the five type names are fixed, and the validator accepts good widget declarations and rejects bad ones', () => {
+  assert(WIDGET_TYPE_NAMES.join() === 'stepper,slider,training,graph,messages');
+  const ok = baseData(); ok.explanations.A.widget = { type: 'stepper', config: 'widgets/x.json' };
+  assert(statusOf(validateData(ok), 'R2') === 'pass', 'valid widget passes');
+  const noType = baseData(); noType.explanations.A.widget = { type: 'carousel', config: 'widgets/x.json' };
+  assert(statusOf(validateData(noType), 'R2') === 'fail' && /widget type/.test(problemsOf(validateData(noType), 'R2')));
+  const noCfg = baseData(); noCfg.explanations.A.widget = { type: 'slider' };
+  assert(/no config/.test(problemsOf(validateData(noCfg), 'R2')));
+  const str = baseData(); str.explanations.A.widget = 'stepper';
+  assert(statusOf(validateData(str), 'R2') === 'fail', 'a widget that is not an object fails');
 });
 
 /* ---------- real data ---------- */

@@ -10,6 +10,8 @@
  * }
  */
 
+import { mountWidget } from './widgets/index.js';
+
 const ROOT_URL = new URL('../', import.meta.url);
 
 function h(tag, props = {}, ...children) {
@@ -91,10 +93,26 @@ function diagram(explanation) {
   return fig;
 }
 
+/** The "Try it" section for a paper that has an interactive widget; the host is mounted into after insertion. */
+function widgetSection(explanation) {
+  if (!explanation?.widget) return null;
+  const host = h('div', { class: 'widget-host' });
+  return { host, section: h('section', { class: 'panel-section widget-section' }, h('h3', {}, 'Try it'), host) };
+}
+
 export function createPanel(root, { onClose, onNavigate } = {}) {
+  let widget = null; // the mounted widget handle, destroyed whenever the panel content changes
+
+  function destroyWidget() {
+    widget?.destroy();
+    widget = null;
+  }
+
   function show(model) {
     const { paper, explanation, groups } = model;
+    destroyWidget(); // never leave the previous paper's widget running
     root.textContent = '';
+    const wsec = widgetSection(explanation);
 
     const close = h('button', { type: 'button', class: 'panel-close', 'aria-label': 'Close details' }, '×');
     close.addEventListener('click', () => onClose?.());
@@ -122,6 +140,7 @@ export function createPanel(root, { onClose, onNavigate } = {}) {
         section('What it unlocked', explanation.unlocked),
         section('What it left open', explanation.left_open),
         diagram(explanation),
+        wsec?.section,
       );
     } else {
       add(
@@ -152,12 +171,18 @@ export function createPanel(root, { onClose, onNavigate } = {}) {
     root.hidden = false;
     root.scrollTop = 0;
     close.focus({ preventScroll: true });
+    if (wsec) widget = mountWidget(wsec.host, explanation.widget); // after insertion, so it can measure its container
   }
 
   function hide() {
+    destroyWidget();
     root.hidden = true;
     root.textContent = '';
   }
 
-  return { show, hide };
+  return {
+    show, hide,
+    /** The widget handle for the paper currently shown (null if none); `ready` resolves once it has loaded. */
+    get widget() { return widget; },
+  };
 }

@@ -19,6 +19,8 @@
   <script type="module">
 import { start } from '../js/app.js';
 import { createPanel } from '../js/panel.js';
+import { mountWidget, widgetStats } from '../js/widgets/index.js';
+import { mount as mountStepper } from '../js/widgets/stepper.js';
 import { buildIndex, ancestors, descendants, rivals } from '../js/traverse.js';
 
 const canvasEl = document.getElementById('canvas');
@@ -339,6 +341,174 @@ await check('a missing diagram falls back to a message instead of a broken image
   await sleep(600);
   assert(host.querySelector('.diagram-missing') && !host.querySelector('img.diagram'), 'fallback not shown');
   host.remove();
+});
+
+/* ---------- interactive widgets (M4): the Turing stepper ---------- */
+await mount();
+const wq = (sel) => panelEl.querySelector(sel);
+const wbtn = (re) => [...panelEl.querySelectorAll('.widget-controls button')].find((b) => re.test(b.textContent));
+const counter = () => wq('.widget-counter')?.textContent;
+const tapeDigits = () => [...panelEl.querySelectorAll('.tm-sym:not(.blank)')].map((n) => n.textContent).join('');
+const selectWidgetPaper = async (id = 'CS004') => { click(node(id)); await sleep(30); await app.panel.widget.ready; };
+const stats0 = widgetStats();
+
+await check('widget: the Turing panel mounts a stepper with input, controls, tape and rule table', async () => {
+  await selectWidgetPaper();
+  assert(wq('.widget-section h3')?.textContent === 'Try it', 'Try it heading');
+  assert(wq('.widget.stepper') && wq('.tm-tape') && panelEl.querySelectorAll('.tm-rules tbody tr').length === 3, 'tape + 3 rules');
+  assert(wq('.widget-inputs input').value === '1011' && wbtn(/Reset/) && wbtn(/Back/) && wbtn(/Play/) && wbtn(/Step/));
+  assert(counter() === 'Step 0 of 3' && wbtn(/Back/).disabled && wbtn(/Reset/).disabled && !wbtn(/Step/).disabled);
+  assert(/Start in state/.test(wq('.widget-status').textContent) && tapeDigits() === '1011');
+  assert(wq('.widget-caption').textContent.length > 40, 'caption present');
+  assert(wq('.tm-tape').getAttribute('role') === 'img' && wq('.tm-tape').getAttribute('aria-label').includes('State carry'), 'tape is described for assistive tech');
+});
+
+await check('widget: stepping reaches Halted with 1011 + 1 = 1100; Back and Reset work', async () => {
+  click(wbtn(/Step/)); click(wbtn(/Step/)); click(wbtn(/Step/));
+  assert(counter() === 'Step 3 of 3' && /Halted\. 1011 \(11\) \+ 1 = 1100 \(12\)\./.test(wq('.widget-status').textContent), wq('.widget-status').textContent);
+  assert(tapeDigits() === '1100' && wbtn(/Step/).disabled && /Replay/.test(wbtn(/Play|Replay/).textContent));
+  click(wbtn(/Back/));
+  // Hand-computed: the 1011 run goes 1011 -> 1010 -> 1000 -> 1100, so one step back from the end shows 1000.
+  assert(counter() === 'Step 2 of 3' && !wbtn(/Step/).disabled && tapeDigits() === '1000', `back: ${counter()} ${tapeDigits()}`);
+  click(wbtn(/Reset/));
+  assert(counter() === 'Step 0 of 3' && tapeDigits() === '1011', 'reset returns to the start');
+});
+
+await check('widget: the rule just applied is highlighted in the table', async () => {
+  click(wbtn(/Step/));
+  const active = panelEl.querySelectorAll('.tm-rules tr.active');
+  assert(active.length === 1 && active[0].cells[0].textContent === 'carry' && active[0].cells[1].textContent === '1', 'first step applies carry/1');
+  click(wbtn(/Reset/));
+  assert(panelEl.querySelectorAll('.tm-rules tr.active').length === 0, 'no rule highlighted at the start');
+});
+
+await check('widget: editing the number and pressing Run rebuilds the run (111 -> 1000)', async () => {
+  const input = wq('.widget-inputs input');
+  input.value = '111';
+  wq('.widget-inputs button[type=submit]').click();
+  assert(counter() === 'Step 0 of 4' && tapeDigits() === '111', counter());
+  for (let i = 0; i < 4; i++) click(wbtn(/Step/));
+  assert(tapeDigits() === '1000' && /111 \(7\) \+ 1 = 1000 \(8\)/.test(wq('.widget-status').textContent), wq('.widget-status').textContent);
+});
+
+await check('widget: invalid input shows an error, marks the field, and keeps the previous run', async () => {
+  const input = wq('.widget-inputs input');
+  const before = counter();
+  input.value = 'abc';
+  wq('.widget-inputs button[type=submit]').click();
+  const err = wq('.widget-input-error');
+  assert(!err.hidden && /only the digits 0 and 1/.test(err.textContent) && input.getAttribute('aria-invalid') === 'true');
+  assert(counter() === before, 'the run was not replaced');
+  input.value = '1011';
+  wq('.widget-inputs button[type=submit]').click();
+  assert(err.hidden && !input.hasAttribute('aria-invalid') && counter() === 'Step 0 of 3', 'a valid value clears the error');
+});
+
+await check('widget: Play advances on its own, stops at the end, and leaves no timer behind', async () => {
+  click(wbtn(/Play/));
+  assert(/Pause/.test(wbtn(/Pause/)?.textContent || ''), 'button becomes Pause');
+  assert(widgetStats().timers >= 1, 'a timer is pending while playing');
+  await sleep(4000);
+  assert(counter() === 'Step 3 of 3' && /Replay/.test(wbtn(/Replay/)?.textContent || ''), 'reached the end: ' + counter());
+  assert(widgetStats().timers === stats0.timers, 'no timers pending after it finishes');
+});
+
+await check('widget: Pause stops playback; Replay restarts from the beginning', async () => {
+  click(wbtn(/Replay/));
+  await sleep(1100);
+  click(wbtn(/Pause/));
+  const at = counter();
+  await sleep(2000);
+  assert(counter() === at, 'paused: no further movement');
+  assert(widgetStats().timers === stats0.timers, 'pausing clears the timer');
+  click(wbtn(/Reset/));
+});
+
+await check('widget: arrow keys step forward and back (but not while typing in the field)', async () => {
+  const root = wq('.widget.stepper');
+  root.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+  assert(counter() === 'Step 1 of 3', counter());
+  root.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+  assert(counter() === 'Step 0 of 3');
+  wq('.widget-inputs input').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+  assert(counter() === 'Step 0 of 3', 'arrow keys in the text field do not step');
+});
+
+await check('widget: moving to another paper destroys the widget and its timers', async () => {
+  click(wbtn(/Play/));
+  assert(widgetStats().mounted === stats0.mounted + 1 && widgetStats().timers >= 1);
+  click(node('CS005')); await sleep(30);
+  assert(!wq('.widget') && !wq('.widget-section'), 'the widget is gone from the panel');
+  assert(widgetStats().mounted === stats0.mounted && widgetStats().timers === stats0.timers, JSON.stringify(widgetStats()));
+  await sleep(1500); // a leaked timer would fire now; nothing should throw or change
+  assert(!wq('.widget'), 'nothing reappeared');
+});
+
+await check('widget: papers without a widget have no "Try it" section', async () => {
+  click(node('CS013')); await sleep(30);
+  assert(!wq('.widget-section') && ![...panelEl.querySelectorAll('h3')].some((h) => h.textContent === 'Try it'));
+});
+
+await check('widget: closing the panel (Esc) while playing leaves nothing running', async () => {
+  await selectWidgetPaper();
+  click(wbtn(/Play/));
+  esc(); await sleep(50);
+  assert(panelEl.hidden && widgetStats().mounted === stats0.mounted && widgetStats().timers === stats0.timers);
+});
+
+await check('widget: 40 rapid select/deselect cycles (some mid-load, some mid-play) leak nothing', async () => {
+  for (let i = 0; i < 40; i++) {
+    click(node('CS004'));                       // mounts (async load begins)
+    if (i % 3 === 0) { await sleep(40); wbtn(/Play/)?.click(); }   // sometimes start playing
+    click(node(i % 2 ? 'CS005' : 'CS004'));     // move away, or re-select the same paper
+    if (i % 5 === 0) esc();
+  }
+  await sleep(300);
+  click(node('CS005')); await sleep(50);
+  const s = widgetStats();
+  assert(s.mounted === stats0.mounted && s.timers === stats0.timers && !wq('.widget'), JSON.stringify(s));
+});
+
+await check('widget: destroying before loading finishes mounts nothing', async () => {
+  const host = d.createElement('div'); d.body.appendChild(host);
+  const before = widgetStats();
+  const wdg = mountWidget(host, { type: 'stepper', config: 'widgets/turing.json' });
+  wdg.destroy();               // the user moved on immediately
+  await wdg.ready;
+  assert(host.textContent === '' && widgetStats().mounted === before.mounted && widgetStats().timers === before.timers);
+  wdg.destroy();               // destroying twice is harmless
+  host.remove();
+});
+
+await check('widget: a missing config, an unknown type and a not-yet-built type all show a message, never throw', async () => {
+  const before = widgetStats();
+  for (const spec of [{ type: 'stepper', config: 'widgets/does-not-exist.json' }, { type: 'carousel', config: 'widgets/turing.json' },
+                      { type: 'slider', config: 'widgets/turing.json' }, { type: 'stepper' }, null]) {
+    const host = d.createElement('div'); d.body.appendChild(host);
+    const wdg = mountWidget(host, spec);
+    await wdg.ready;
+    assert(/unavailable/.test(host.textContent), `${JSON.stringify(spec)} -> "${host.textContent}"`);
+    wdg.destroy(); host.remove();
+  }
+  assert(widgetStats().mounted === before.mounted, 'failures are not counted as mounted widgets');
+});
+
+await check('widget: text in a config (title, caption) is shown as text, never as HTML', async () => {
+  const cfg = await fetch('../widgets/turing.json').then((r) => r.json());
+  const evil = '<img src=x onerror="window.__pwnedW=1"><script>window.__pwnedW=2<\/script>';
+  const host = d.createElement('div'); d.body.appendChild(host);
+  const h = mountStepper(host, { ...cfg, title: evil, caption: evil });
+  await sleep(200);
+  assert(!host.querySelector('img') && !host.querySelector('script') && !w.__pwnedW, 'markup stayed text');
+  assert(host.textContent.includes('<img src=x'), 'shown literally');
+  h.destroy(); assert(host.textContent === '', 'destroy removes the widget DOM'); host.remove();
+});
+
+await check('widget: an unknown stepper model is rejected clearly', async () => {
+  const host = d.createElement('div');
+  let msg = '';
+  try { mountStepper(host, { model: 'nope' }); } catch (e) { msg = e.message; }
+  assert(/unknown stepper model/.test(msg), msg);
 });
 
 await mount('#CS048');

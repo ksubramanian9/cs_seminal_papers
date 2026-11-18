@@ -1,0 +1,17 @@
+{
+  "model": "turing",
+  "title": "A Turing machine that adds 1 to a binary number",
+  "caption": "These three rules are the machine's whole program. Change the number on the tape and the same rules still add one. Turing's universal machine goes a step further: it reads a table like this from its own tape.",
+  "blank": "_",
+  "initialState": "carry",
+  "haltStates": ["halt"],
+  "input": "1011",
+  "maxDigits": 8,
+  "maxSteps": 200,
+  "resultTemplate": "Halted. {input} ({inDec}) + 1 = {out} ({outDec}).",
+  "rules": [
+    { "state": "carry", "read": "1", "write": "0", "move": "L", "next": "carry" },
+    { "state": "carry", "read": "0", "write": "1", "move": "L", "next": "halt" },
+    { "state": "carry", "read": "_", "write": "1", "move": "L", "next": "halt" }
+  ]
+}

@@ -165,7 +165,7 @@ In this order:
 
 ### 5.5 Widgets
 
-A small widget library with a common contract: a widget module exports `mount(container, config)` and `destroy()`. Five reusable widget types serve **12 papers** (the number and the list were chosen with the author after M3e).
+A small widget library with a common contract: a widget module exports `mount(container, config)`, which returns a handle with `destroy()` (a handle, not a module-level function, so several mounts cannot be confused). A paper opts in with `"widget": { "type": "stepper", "config": "widgets/turing.json" }`; the loader (`js/widgets/index.js`) fetches the config and imports the type's module on demand, is safe if the user moves on mid-load, and shows a message instead of throwing if anything fails. Every timer goes through a tracked registry so leaks are measurable, and the panel destroys the previous widget whenever its content changes. Five reusable widget types serve **12 papers** (the number and the list were chosen with the author after M3e).
 
 **Selection principles the author confirmed:** (1) ideas that click when you play with them; (2) at least one widget per era; (3) a spread across fields; (4) weight toward the ideas the author finds hardest.
 
