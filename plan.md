@@ -18,7 +18,7 @@ Walking skeleton first: render all 79 nodes with era bands and selection highlig
 - **M3e (era E7, 2009-2023, CS068-CS079): built and committed** (`cc562cd`); its short review is still open (see "M3e review" below). **All 79 papers are now authored**, with no placeholder edges left.
 - **Widget list for M4: agreed** (task 4.2, see spec section 5.5): 12 papers served by five reusable widget types.
 - **M4 in progress.** Task 4.1 (the contract) is done, and the whole **stepper** type is built with all four of its papers: Turing machine (CS004), Church's lambda calculus (CS003), Dijkstra's shortest paths (CS013) and Quicksort (CS016). Each of those three needed only a model and a config. Remaining: slider model (4 papers), training loop (2), graph iteration (1) and message simulator (1) — 8 of the 12 papers.
-- **Next:** finish M4 (sliders first), then the Tier A expansion, then M5 (polish and hardening). The label work (T6) is built and waiting to be committed. The order and the decisions behind it are under "Open threads and sequence" below. The strict validator (`tests/validate.html?strict=1`, the project's definition of done for content) is the gate for M3, and its result is recorded under "M3e review".
+- **Next:** finish M4 (sliders first), then the Tier A expansion, then M5 (polish and hardening). The order and the decisions behind it are under "Open threads and sequence" below. The strict validator (`tests/validate.html?strict=1`, the project's definition of done for content) is the gate for M3, and its result is recorded under "M3e review".
 - **Tests** (open any through Live Server; the page title reads ALL PASSED, and each page lists every check):
   - `tests/unit.html`: 93 checks (layout, label choice, traversal, the validator rules, the theme logic, and the widget code, including every stepper model).
   - `tests/smoke.html`: 66 checks; mounts the real app on its own page and drives it, and loads the real `index.html` to test the theme toggle. It is written for a desktop-sized window: in a small one (for example headless Edge's default 800×600) two layout tests fail, so run it at 1500×900 or larger.
@@ -40,7 +40,7 @@ Walking skeleton first: render all 79 nodes with era bands and selection highlig
 |---|---|---|---|---|
 | T1 | Commit the stepper work | Me | none | Done (`0b361b6`, `91ec9c4`) |
 | T2 | Move reference tables below the controls | Me | none | Done |
-| T6 | Importance-based labels, tested on about 120 stand-in nodes | Me | T5 | Done (not yet committed); result below |
+| T6 | Importance-based labels, tested on about 120 stand-in nodes | Me | T5 | Done (`82be31c`); result below |
 | T3 | Finish M4: slider (CS008, CS021, CS034, CS065), graph iteration (CS057), training loop (CS048, CS070), message simulator (CS058); then task 4.4 | Me | none | After T6 |
 | T7 | Expansion: generalise the validator and tests (they hard-code 79), promote the 8 ghosts, author Tier A and the three extras in era batches | Me | T4, T6 | After T6; parallel with T3 only if the author wants |
 | T8 | Review-queue verification (starts with section A, the explicit edges; grows with T7) | Author | none | In parallel with T7 |
