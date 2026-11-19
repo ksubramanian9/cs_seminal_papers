@@ -87,8 +87,12 @@ export function stackNodes(laneNodes, { labelGap = 4, hGap = 10 } = {}) {
  * nodes: [{ id, year, lane, label, impact, ghost? }]
  * lanes: [{ id, label, color }] in top-to-bottom order
  * Returns { nodes (with x,y,r,row,labelW), lanes (with y0,h,cy,rows), width, height }.
+ *
+ * By default the sub-rows only keep the dots apart: the app draws labels itself, in screen space,
+ * and chooses which ones fit (js/labels.js). Pass reserveLabels: true to also reserve room for every
+ * label in world space, which gives taller lanes but never needs a label to be hidden.
  */
-export function computeLayout({ nodes, lanes, xScale, measure = estimateTextWidth }) {
+export function computeLayout({ nodes, lanes, xScale, measure = estimateTextWidth, reserveLabels = false }) {
   const laneIds = new Set(lanes.map((l) => l.id));
   const prepared = nodes.map((n) => {
     if (!laneIds.has(n.lane)) throw new Error(`computeLayout: node ${n.id} has unknown lane "${n.lane}"`);
@@ -100,7 +104,7 @@ export function computeLayout({ nodes, lanes, xScale, measure = estimateTextWidt
   let y = 0;
   for (const lane of lanes) {
     const inLane = prepared.filter((n) => n.lane === lane.id);
-    const { rowOf, rows } = stackNodes(inLane);
+    const { rowOf, rows } = stackNodes(reserveLabels ? inLane : inLane.map((n) => ({ ...n, labelW: 0 })));
     const h = LANE_PAD * 2 + rows * ROW_H;
     for (const n of inLane) {
       const row = rowOf.get(n.id);

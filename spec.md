@@ -138,6 +138,7 @@ Colours must be distinguishable and pass WCAG AA contrast against the background
 - Nodes in the same lane within a close span of years are stacked into sub-rows by a deterministic collision rule, so no two nodes overlap.
 - Node size maps to `conceptual_impact_1_3` (2 = smaller, 3 = larger). Node fill is the lane colour. Ghost nodes are grey and dashed.
 - Each node has a short label (a "short title" field in `papers.json`) and a year. Full titles appear in the panel and tooltip.
+- Labels are drawn at a fixed readable size (11 px) at every zoom, so there is not always room for all of them. They are offered in order of importance (the hovered node, then the selected paper's lineage, then conceptual impact, then number of links) and each is drawn only if it fits beside, above or below its dot without covering another dot or label or the lane names. Zooming in names more. Hovering or keyboard-focusing a dot, or selecting it, always names it.
 - Edges are cubic curves. Colour and marker identify the edge type. `explicit` edges are full strength; `interpretive` edges are thinner and lighter. `rival` edges are dashed with no arrowhead.
 - Era bands are alternating shaded vertical regions with the era label and question at the top. They remain visible while panning horizontally.
 - Pan and zoom with mouse drag, wheel, and on-screen +/−/reset buttons.

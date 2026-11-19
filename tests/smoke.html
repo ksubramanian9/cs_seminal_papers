@@ -18,6 +18,8 @@
   <script src="../vendor/d3.min.js"></script>
   <script type="module">
 import { start } from '../js/app.js';
+import { createGraph } from '../js/graph.js';
+import { withStubs, STUB_COUNT } from './stub-data.js';
 import { createPanel } from '../js/panel.js';
 import { mountWidget, widgetStats } from '../js/widgets/index.js';
 import { mount as mountStepper } from '../js/widgets/stepper.js';
@@ -55,6 +57,28 @@ const node = (id) => d.querySelector(`.node[data-id="${id}"]`);
 const btn = (t) => [...d.querySelectorAll('.zoom-controls button')].find((b) => b.textContent === t);
 const wheel = (dy, n = 1) => { for (let i = 0; i < n; i++) d.querySelector('.main-svg').dispatchEvent(new WheelEvent('wheel', { deltaY: dy, clientX: 500, clientY: 400, bubbles: true, cancelable: true })); };
 const esc = () => d.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+
+/* ---- node labels (drawn in screen space; js/labels.js decides which fit) ---- */
+const shownLabels = () => [...d.querySelectorAll('.labels .label')].filter((t) => t.style.display !== 'none');
+const paperLabels = () => shownLabels().filter((t) => !t.classList.contains('ghost'));
+const labelOf = (id) => d.querySelector(`.labels .label[data-id="${id}"]`);
+const stageBox = () => d.querySelector('.stage').getBoundingClientRect();
+const boxesOverlap = (a, b, pad = 0) => a.left < b.right + pad && b.left < a.right + pad && a.top < b.bottom + pad && b.top < a.bottom + pad;
+const inViewBox = (r, st) => r.left >= st.left + 111 && r.right <= st.right && r.top >= st.top && r.bottom <= st.bottom;
+const papersInView = () => { const st = stageBox(); return [...d.querySelectorAll('.node:not(.ghost)')].filter((g) => inViewBox(g.querySelector('circle').getBoundingClientRect(), st)); };
+/** Everything wrong with the labels now drawn, worked out from the page itself (not from labels.js). */
+function labelProblems({ mayCover = [] } = {}) { // mayCover: ids whose label is allowed to cover a dot (hovered or selected: they are always named)
+  const st = stageBox(), out = [];
+  const dots = [...d.querySelectorAll('.node')].map((g) => ({ id: g.dataset.id, r: g.querySelector('circle').getBoundingClientRect() }));
+  const ls = shownLabels().map((t) => ({ id: t.dataset.id, r: t.getBoundingClientRect() }));
+  for (const a of ls) {
+    if (a.r.left < st.left + 111 || a.r.right > st.right + 1 || a.r.top < st.top - 1 || a.r.bottom > st.bottom + 1) out.push(`${a.id} leaves the stage or sits under the lane names`);
+    for (const dot of dots) if (dot.id !== a.id && !mayCover.includes(a.id) && boxesOverlap(a.r, dot.r, -1)) out.push(`${a.id} covers the dot of ${dot.id}`);
+  }
+  for (let i = 0; i < ls.length; i++) for (let j = i + 1; j < ls.length; j++) if (boxesOverlap(ls[i].r, ls[j].r, -1)) out.push(`${ls[i].id} overlaps ${ls[j].id}`);
+  return out;
+}
+const namedShareInView = () => { const inView = new Set(papersInView().map((g) => g.dataset.id)); return paperLabels().filter((t) => inView.has(t.dataset.id)).length / Math.max(1, inView.size); };
 
 await mount();
 
@@ -158,18 +182,13 @@ await check('wheel zoom in/out changes scale and respects limits', async () => {
   assert(scaleOf() <= 3.0001, `max clamp ${scaleOf()}`);
 });
 
-await check('zoomed far out hides labels (svg.zoomed-out)', async () => {
-  wheel(600, 100); await sleep(150);
-  assert(d.querySelector('.main-svg').classList.contains('zoomed-out') || scaleOf() >= 0.5, 'labels should hide below k=0.5');
-});
-
 await check('Fit button returns to the fitted view (animated)', async () => {
   wheel(-500, 5); await sleep(150);
   const kZoomed = scaleOf();
   click(btn('Fit')); await sleep(900);
   const [tx, ty] = transOf();
   assert(scaleOf() < kZoomed && tx === 0 && ty >= 0, `after fit ${worldT()} (was k=${kZoomed})`);
-  assert(!d.querySelector('.main-svg').classList.contains('zoomed-out'), 'labels visible at fit');
+  assert(paperLabels().length >= 30 && labelProblems().length === 0, `labels at fit: ${paperLabels().length} drawn; ${labelProblems().slice(0, 2)}`);
 });
 
 await check('zoom + button increases scale; − decreases it', async () => {
@@ -194,6 +213,81 @@ await check('drag pans the view when zoomed in, never past the world edge', asyn
   ev('mousedown', 400, 400, svg); ev('mousemove', 9000, 400, w); ev('mouseup', 9000, 400, w);
   await sleep(200);
   assert(transOf()[0] <= 0.5, `must not pan right past the world start (tx=${transOf()[0]})`); // d3's clamp can leave ~1e-13 of float noise
+});
+
+/* ---------- node labels: screen space, chosen by importance ---------- */
+await mount();
+
+await check('labels: at fit, most papers are named at a fixed readable size, none overlapping, covering a dot, or under the lane names', async () => {
+  const named = paperLabels();
+  assert(named.length / app.data.papers.length >= 0.5, `${named.length} of ${app.data.papers.length} papers named`);
+  assert(named.every((t) => getComputedStyle(t).fontSize === '11px'), 'labels are 11px at fit zoom');
+  const problems = labelProblems();
+  assert(problems.length === 0, problems.slice(0, 4).join('; '));
+  assert(shownLabels().every((t) => ['start', 'end', 'middle'].includes(t.getAttribute('text-anchor'))), 'every drawn label has a placement');
+  assert(d.querySelector('.labels').getAttribute('aria-hidden') === 'true' && [...d.querySelectorAll('.node:not(.ghost)')].every((g) => g.getAttribute('aria-label')), 'dots are named for assistive tech; the visual labels are hidden from it');
+});
+
+await check('labels: zooming in names a larger share of what is in view, still at 11px; zooming right out still draws clean labels', async () => {
+  const before = namedShareInView();
+  wheel(-500, 2); await sleep(300);
+  assert(scaleOf() > 1.5, `zoomed in: ${scaleOf()}`);
+  const after = namedShareInView();
+  assert(after >= before && after >= 0.75, `share named in view: fit ${before.toFixed(2)} -> zoomed ${after.toFixed(2)}`);
+  assert(paperLabels().every((t) => getComputedStyle(t).fontSize === '11px') && labelProblems().length === 0, 'same size, still clean: ' + labelProblems().slice(0, 2));
+  wheel(900, 4); await sleep(300);
+  assert(paperLabels().length > 0 && labelProblems().length === 0 && paperLabels().every((t) => getComputedStyle(t).fontSize === '11px'), `zoomed right out (k=${scaleOf().toFixed(2)}): ${paperLabels().length} drawn; ${labelProblems().slice(0, 2)}`);
+  click(btn('Fit')); await sleep(500);
+});
+
+await check('labels: selecting a paper names its lineage first, bolds the selected paper, mirrors the node highlight and dims the rest', async () => {
+  await mount();
+  click(node('CS075')); await sleep(700);
+  const sel = d.querySelector('.labels .label.sel');
+  assert(sel && sel.dataset.id === 'CS075' && sel.style.display !== 'none' && Number(getComputedStyle(sel).fontWeight) >= 700, 'the selected paper is named, in bold');
+  assert(ids('on').join() === [...d.querySelectorAll('.labels .label.on')].map((t) => t.dataset.id).sort().join(), 'a node and its label always carry the same highlight');
+  const st = stageBox();
+  const lineage = [...d.querySelectorAll('.node.on')].filter((g) => inViewBox(g.querySelector('circle').getBoundingClientRect(), st));
+  const named = lineage.filter((g) => labelOf(g.dataset.id).style.display !== 'none').length;
+  assert(lineage.length >= 10 && named / lineage.length >= 0.6, `${named} of ${lineage.length} lineage papers in view are named`);
+  assert(shownLabels().filter((t) => !t.classList.contains('on')).every((t) => Number(getComputedStyle(t).opacity) < 0.5), 'labels outside the lineage are dimmed');
+  assert(labelProblems({ mayCover: ['CS075'] }).length === 0, labelProblems({ mayCover: ['CS075'] }).slice(0, 3).join('; '));
+  // Labels are offered to the layout in this order: the selected paper, then every paper in its lineage, then the rest.
+  const lineageIds = new Set(ids('on')), order = app.graph.labelOrder();
+  assert(order[0] === 'CS075' && order.slice(0, lineageIds.size).every((id) => lineageIds.has(id)), `lineage first: ${order.slice(0, 5)}`);
+  esc(); await sleep(400);
+  assert(app.graph.labelOrder()[0] !== 'CS075' && !app.graph.labelOrder().slice(0, 3).every((id) => lineageIds.has(id)), 'after clearing, the order is back to importance');
+  assert(!d.querySelector('.labels .label.on') && !d.querySelector('.labels .label.sel'), 'clearing the selection clears the label highlight');
+});
+
+await check('labels: hovering or keyboard-focusing a dot names it even when there was no room, and leaving hides it again', async () => {
+  await mount();
+  const dot = [...d.querySelectorAll('.node:not(.ghost)')].find((g) => labelOf(g.dataset.id).style.display === 'none');
+  assert(dot, 'at fit some papers have no label yet');
+  const lab = labelOf(dot.dataset.id);
+  dot.dispatchEvent(new MouseEvent('mouseenter'));
+  assert(app.graph.labelOrder()[0] === dot.dataset.id, 'the hovered paper is offered first');
+  // The hovered label is always shown; it may cover a neighbouring dot, but never another label, and it stays in view.
+  assert(lab.style.display !== 'none' && labelProblems({ mayCover: [dot.dataset.id] }).length === 0, 'hover shows the label: ' + labelProblems({ mayCover: [dot.dataset.id] }).slice(0, 2));
+  dot.dispatchEvent(new MouseEvent('mouseleave'));
+  assert(lab.style.display === 'none', 'leaving hides it again');
+  dot.dispatchEvent(new Event('focus'));
+  assert(lab.style.display !== 'none', 'keyboard focus shows it');
+  dot.dispatchEvent(new Event('blur'));
+  assert(lab.style.display === 'none', 'blur hides it again');
+});
+
+await check('labels: with 42 stand-in papers added (about 121), the map still fits and a useful share is named, cleanly', async () => {
+  app.destroy();
+  const g = createGraph(canvasEl, withStubs(app.data), { animate: false });
+  await sleep(700);
+  try {
+    assert(d.querySelectorAll('.node:not(.ghost)').length === 79 + STUB_COUNT, 'all 121 papers are drawn');
+    assert(scaleOf() > 0.5, `the whole map fits at a usable scale (${scaleOf().toFixed(2)})`);
+    const named = paperLabels().length;
+    assert(named / (79 + STUB_COUNT) >= 0.5, `${named} of ${79 + STUB_COUNT} named at fit`);
+    assert(labelProblems().length === 0, labelProblems().slice(0, 3).join('; '));
+  } finally { g.destroy(); }
 });
 
 /* ---------- the explanation panel (M2) ---------- */

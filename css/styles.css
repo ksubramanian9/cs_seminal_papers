@@ -177,7 +177,8 @@ body {
 /* ---------- nodes and edges ---------- */
 .node { cursor: pointer; outline: none; }
 .node circle { stroke: var(--node-stroke); stroke-width: 1.5; transition: opacity 0.15s; }
-.node .label {
+/* Node labels are drawn in screen space (js/labels.js), so they stay 11px at every zoom level. */
+.labels .label {
   font: 11px var(--font);
   fill: var(--text);
   paint-order: stroke;
@@ -188,16 +189,15 @@ body {
 }
 .node:hover circle { stroke: var(--sel); }
 .node:focus-visible circle { stroke: var(--sel); stroke-width: 3; stroke-dasharray: 3 2; }
-.main-svg.zoomed-out .node .label { display: none; }
 
 .node.sel circle { stroke: var(--sel); stroke-width: 4; }
 .node.anc circle { stroke: var(--anc); stroke-width: 3.5; }
 .node.desc circle { stroke: var(--desc); stroke-width: 3.5; }
 .node.rival circle { stroke: var(--rival); stroke-width: 3; stroke-dasharray: 3 2; }
-.node.sel .label { font-weight: 700; }
+.labels .label.sel { font-weight: 700; }
 
 .edge { transition: opacity 0.15s; pointer-events: none; }
-.has-sel .node:not(.on) { opacity: 0.16; }
+.has-sel .node:not(.on), .has-sel .labels .label:not(.on) { opacity: 0.16; }
 .has-sel .edge:not(.on) { opacity: 0.07; }
 .has-sel .edge.on { stroke-opacity: 1; }
 
@@ -270,7 +270,7 @@ body {
 /* ---------- ghost nodes (outside influences) ---------- */
 .node.ghost { cursor: help; }
 .node.ghost circle { fill: var(--ghost-fill); stroke: var(--ghost-stroke); stroke-width: 1.5; stroke-dasharray: 3 2; }
-.node.ghost .label { fill: var(--muted); font-style: italic; }
+.labels .label.ghost { fill: var(--muted); font-style: italic; }
 .node.ghost:hover circle { stroke: var(--sel); }
 
 /* ---------- panel: explanation, figure, links ---------- */

@@ -10,12 +10,13 @@
 
 import { GUTTER, X_SEGMENTS, computeLayout, makeXScale } from './layout.js';
 import { buildIndex, ancestors, descendants, rivals } from './traverse.js';
+import { chooseLabels, basePriority, withFirst } from './labels.js';
 import { EDGE_STYLE, EVIDENCE_STYLE, MARKER_PATH } from './style.js';
 
 const SVGNS = 'http://www.w3.org/2000/svg';
 const HEADER_H = 78;
 const AXIS_H = 28;
-const LABEL_HIDE_BELOW_K = 0.5; // hide node labels when zoomed out further than this
+const LABEL_MIN_X = 112; // node labels stay clear of the sticky lane names on the left (screen px)
 
 const el = (tag, attrs = {}, parent) => {
   const n = document.createElementNS(SVGNS, tag);
@@ -182,6 +183,17 @@ export function createGraph(root, data, { onSelect, animate = !prefersReducedMot
   // nodes
   const nodeG = el('g', { class: 'nodes' }, world);
   const nodeEls = new Map();
+
+  // Hovering or keyboard-focusing a dot always shows its label, even if there was no room for it.
+  let revealed = null;
+  function wireReveal(g, id) {
+    const set = (v) => () => { if (revealed !== v) { revealed = v; updateLabels(); } };
+    g.addEventListener('mouseenter', set(id));
+    g.addEventListener('mouseleave', set(null));
+    g.addEventListener('focus', set(id));
+    g.addEventListener('blur', set(null));
+  }
+
   for (const n of layout.nodes) {
     if (n.ghost) {
       const gd = ghostById.get(n.id);
@@ -190,10 +202,9 @@ export function createGraph(root, data, { onSelect, animate = !prefersReducedMot
         'aria-label': `${gd.title}, ${gd.year}: outside influence`,
       }, nodeG);
       el('circle', { r: n.r - 1 }, gg);
-      const gt = el('text', { class: 'label', x: n.r + 3, y: 0, dy: '0.35em' }, gg);
-      gt.textContent = n.label;
       const gtitle = el('title', {}, gg);
       gtitle.textContent = `${gd.title} (${gd.year}), outside the list: ${gd.blurb}`;
+      wireReveal(gg, n.id);
       nodeEls.set(n.id, gg);
       continue;
     }
@@ -204,15 +215,51 @@ export function createGraph(root, data, { onSelect, animate = !prefersReducedMot
     }, nodeG);
     const lane = layout.lanes.find((l) => l.id === n.lane);
     el('circle', { r: n.r, fill: lane.color }, g);
-    const t = el('text', { class: 'label', x: n.r + 4, y: 0, dy: '0.35em' }, g);
-    t.textContent = n.label;
     const title = el('title', {}, g);
     title.textContent = `${p.title} — ${p.authors}, ${p.year}`;
+    wireReveal(g, n.id);
     g.addEventListener('click', (ev) => { ev.stopPropagation(); select(n.id, { fromUser: true }); });
     g.addEventListener('keydown', (ev) => {
       if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); select(n.id, { fromUser: true }); }
     });
     nodeEls.set(n.id, g);
+  }
+
+  /* ---------- node labels (screen space, so they stay readable at every zoom) ---------- */
+  const labelG = el('g', { class: 'labels', 'aria-hidden': 'true' }, svg);
+  const labelEls = new Map();
+  for (const n of layout.nodes) {
+    const t = el('text', { class: `label${n.ghost ? ' ghost' : ''}`, dy: '0.35em', 'data-id': n.id }, labelG);
+    t.textContent = n.label;
+    t.style.display = 'none';
+    labelEls.set(n.id, t);
+  }
+  const degree = new Map();
+  for (const e of edges) {
+    degree.set(e.from, (degree.get(e.from) || 0) + 1);
+    degree.set(e.to, (degree.get(e.to) || 0) + 1);
+  }
+  const importance = basePriority(layout.nodes, degree); // most important first
+  let lineageFirst = []; // the selected paper and everything connected to it, in importance order
+
+  /** The order labels are offered in: the hovered node, then the selected paper's lineage, then by importance. */
+  const labelOrder = () => withFirst(withFirst(importance, lineageFirst), [revealed]);
+
+  /** Draw the labels that fit at the current zoom. */
+  function updateLabels() {
+    const order = labelOrder();
+    const shown = chooseLabels({
+      nodes: layout.nodes, order, k: transform.k, tx: transform.x, ty: transform.y, viewW, viewH, minX: LABEL_MIN_X,
+      force: [selected, revealed].filter((id) => id != null), // always named, even in a crowd
+    });
+    for (const [id, t] of labelEls) {
+      const s = shown.get(id);
+      if (!s) { if (t.style.display !== 'none') t.style.display = 'none'; continue; }
+      t.style.display = '';
+      t.setAttribute('x', s.x.toFixed(1));
+      t.setAttribute('y', s.y.toFixed(1));
+      t.setAttribute('text-anchor', s.anchor);
+    }
   }
 
   // sticky lane labels (screen space, y follows the zoom transform)
@@ -266,7 +313,7 @@ export function createGraph(root, data, { onSelect, animate = !prefersReducedMot
   function applyTransform() {
     const t = transform;
     world.setAttribute('transform', t.toString());
-    svg.classList.toggle('zoomed-out', t.k < LABEL_HIDE_BELOW_K);
+    updateLabels();
     laneLabelEls.forEach((txt, i) => {
       const l = layout.lanes[i];
       const lines = Number(txt.dataset.lines) || 1;
@@ -345,16 +392,22 @@ export function createGraph(root, data, { onSelect, animate = !prefersReducedMot
   function applySelection(id) {
     selected = id;
     svg.classList.toggle('has-sel', !!id);
-    for (const g of nodeEls.values()) g.classList.remove('sel', 'anc', 'desc', 'rival', 'on');
+    for (const g of [...nodeEls.values(), ...labelEls.values()]) g.classList.remove('sel', 'anc', 'desc', 'rival', 'on');
     for (const p of edgeEls.values()) p.classList.remove('on');
-    if (!id) return;
+    if (!id) { lineageFirst = []; updateLabels(); return; }
     const A = ancestors(index, id);
     const D = descendants(index, id);
     const R = rivals(edges, id);
-    nodeEls.get(id)?.classList.add('sel', 'on');
-    for (const a of A) nodeEls.get(a)?.classList.add('anc', 'on');
-    for (const d of D) nodeEls.get(d)?.classList.add('desc', 'on');
-    for (const r of R) nodeEls.get(r)?.classList.add('rival', 'on');
+    // A node and its label always carry the same highlight classes.
+    const tag = (nid, ...cls) => { nodeEls.get(nid)?.classList.add(...cls); labelEls.get(nid)?.classList.add(...cls); };
+    tag(id, 'sel', 'on');
+    for (const a of A) tag(a, 'anc', 'on');
+    for (const d of D) tag(d, 'desc', 'on');
+    for (const r of R) tag(r, 'rival', 'on');
+    // The selected paper and its lineage get their labels first, so they are named wherever there is room.
+    const connected = new Set([id, ...A, ...D, ...R]);
+    lineageFirst = [id, ...importance.filter((nid) => connected.has(nid) && nid !== id)];
+    updateLabels();
     for (const [e, path] of edgeEls) {
       let on = false;
       if (e.type === 'rival') on = e.from === id || e.to === id;
@@ -397,7 +450,7 @@ export function createGraph(root, data, { onSelect, animate = !prefersReducedMot
     resize(); // the panel may just have changed the stage width
     const sx = transform.applyX(n.x), sy = transform.applyY(n.y);
     const margin = 60;
-    const visible = sx > margin && sx < viewW - margin - n.labelW * transform.k && sy > margin && sy < viewH - margin;
+    const visible = sx > margin && sx < viewW - margin - n.labelW && sy > margin && sy < viewH - margin;
     if (onlyIfOffscreen && visible) return;
     const k = Math.max(transform.k, 0.9);
     const t = constrain(d3.zoomIdentity.translate(viewW / 2 - n.x * k, viewH / 2 - n.y * k).scale(k));
@@ -426,6 +479,8 @@ export function createGraph(root, data, { onSelect, animate = !prefersReducedMot
 
   return {
     select, focus, fit: () => fit(true), legendSlot,
+    /** The order node labels are offered in (hovered node, then lineage, then by importance). For tests. */
+    labelOrder,
     /** Re-measure the stage and re-clamp the view. Call after anything that changes the stage size. */
     resize,
     get selected() { return selected; },

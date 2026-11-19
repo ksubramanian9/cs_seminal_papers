@@ -14,7 +14,9 @@
   <div id="summary">Running…</div>
   <ul id="results"></ul>
 <script type="module">
-import { makeXScale, stackNodes, computeLayout, radiusFor, ROW_H, X_SEGMENTS } from '../js/layout.js';
+import { makeXScale, stackNodes, computeLayout, radiusFor, ROW_H, X_SEGMENTS, estimateTextWidth } from '../js/layout.js';
+import { chooseLabels, basePriority, withFirst, SIDES } from '../js/labels.js';
+import { withStubs, STUB_COUNT } from './stub-data.js';
 import { validateData, wordCount, requiredFiles } from '../js/validate.js';
 import { resolveTheme, createThemeToggle, safeStorage } from '../js/theme.js';
 import { run as tmRun, validate as tmValidate, inputs as tmInputs } from '../js/widgets/models/turing.js';
@@ -399,6 +401,106 @@ test('widgets: the five type names are fixed, and the validator accepts good wid
   assert(statusOf(validateData(str), 'R2') === 'fail', 'a widget that is not an object fails');
 });
 
+/* ---------- chooseLabels: which node labels get drawn ---------- */
+const LN = (id, x, y, labelW = 60, r = 6) => ({ id, x, y, r, labelW });
+const V = { k: 1, tx: 0, ty: 0, viewW: 800, viewH: 400 };
+const choose = (nodes, order, extra = {}) => chooseLabels({ nodes, order, ...V, ...extra });
+// The rectangle a returned label occupies, worked out here from its anchor, not taken from the module.
+const labelRect = (l, h = 14) => ({
+  x0: l.anchor === 'start' ? l.x : l.anchor === 'end' ? l.x - l.w : l.x - l.w / 2,
+  x1: l.anchor === 'start' ? l.x + l.w : l.anchor === 'end' ? l.x : l.x + l.w / 2,
+  y0: l.y - h / 2, y1: l.y + h / 2,
+});
+
+test('labels: the candidate sides are fixed: beside the dot first, then on top, then under', () => {
+  assert(SIDES.join() === 'right,left,above,below');
+});
+test('labels: when two labels collide the higher-priority one is drawn and the other is hidden (and the order decides)', () => {
+  const nodes = [LN('a', 100, 100), LN('b', 100, 112)]; // labels overlap by 2px; neither dot is in the other's way
+  const ab = choose(nodes, ['a', 'b'], { sides: ['right'] }), ba = choose(nodes, ['b', 'a'], { sides: ['right'] });
+  assert(ab.has('a') && !ab.has('b'), 'a first: a wins');
+  assert(ba.has('b') && !ba.has('a'), 'b first: b wins');
+});
+test('labels: a label never covers another node\u2019s dot, so it moves to the next side, and is hidden when none is free', () => {
+  const me = LN('me', 100, 100);
+  const dot = (id, x, y) => LN(id, x, y, 0, 6);
+  const right = choose([me, dot('r', 130, 100)], ['me']).get('me');
+  assert(right.side === 'left' && right.anchor === 'end' && right.x === 90, `right blocked -> left: ${JSON.stringify(right)}`);
+  const above = choose([me, dot('r', 130, 100), dot('l', 60, 100)], ['me']).get('me');
+  assert(above.side === 'above' && above.anchor === 'middle' && above.x === 100 && above.y === 85, `-> above: ${JSON.stringify(above)}`);
+  const below = choose([me, dot('r', 130, 100), dot('l', 60, 100), dot('u', 100, 85)], ['me']).get('me');
+  assert(below.side === 'below' && below.y === 115, `-> below: ${JSON.stringify(below)}`);
+  assert(!choose([me, dot('r', 130, 100), dot('l', 60, 100), dot('u', 100, 85), dot('d', 100, 115)], ['me']).has('me'), 'nowhere to go: hidden');
+});
+test('labels: a forced label (hovered or selected node) is drawn even when every side is blocked by other dots, but only as a last resort', () => {
+  const me = LN('me', 100, 100);
+  const dot = (id, x, y) => LN(id, x, y, 0, 6);
+  const boxed = [me, dot('r', 130, 100), dot('l', 60, 100), dot('u', 100, 85), dot('d', 100, 115)];
+  assert(!choose(boxed, ['me']).has('me'), 'not forced: hidden');
+  const f = choose(boxed, ['me'], { force: ['me'] }).get('me');
+  assert(f && f.side === 'right', `forced: first side inside the view is used: ${JSON.stringify(f)}`);
+  const free = choose([me, dot('r', 130, 100)], ['me'], { force: ['me'] }).get('me');
+  assert(free.side === 'left', 'forced but a clear side exists: the clear side is used, not the covered one');
+  assert(!choose([LN('edge', 20, 100)], ['edge'], { force: ['edge'], minX: 112 }).has('edge'), 'even forced labels stay out of the left margin');
+});
+test('labels: a node\u2019s own dot never blocks its own label, and an unobstructed label goes to the right', () => {
+  const l = choose([LN('a', 100, 100)], ['a']).get('a');
+  assert(l.side === 'right' && l.anchor === 'start' && l.x === 110 && l.y === 100 && l.w === 60);
+});
+test('labels: nodes outside the view are not labelled', () => {
+  const m = choose([LN('in', 100, 100), LN('far-right', 2000, 100), LN('far-below', 100, 900), LN('far-above', 100, -900)], ['in', 'far-right', 'far-below', 'far-above']);
+  assert([...m.keys()].join() === 'in');
+});
+test('labels: nothing is drawn left of minX (where the lane names sit) or past the right edge', () => {
+  const near = LN('edge', 20, 100);
+  assert(choose([near], ['edge'], { minX: 112 }).size === 0, 'every side starts left of 112');
+  assert(choose([near], ['edge'], { minX: 0 }).size === 1, 'with no margin it is drawn');
+  const right = choose([LN('r', 780, 100)], ['r']).get('r');
+  assert(right.side === 'left', 'would run past the right edge on the right, so it goes left');
+});
+test('labels: zooming in spreads a crowded row apart, so more of it gets a label', () => {
+  const row = Array.from({ length: 8 }, (_, i) => LN(`n${i}`, 100 + i * 30, 100, 40));
+  const order = row.map((n) => n.id);
+  const n = (k) => chooseLabels({ nodes: row, order, k, tx: 0, ty: 0, viewW: 1200, viewH: 400, sides: ['right'] }).size;
+  // The dots grow with the zoom too, so a label has to clear its neighbour's dot: it only opens up at 3x here.
+  assert(n(0.5) >= 1 && n(2) >= n(0.5) && n(3) > n(0.5) && n(3) >= 6, `k=0.5:${n(0.5)} k=2:${n(2)} k=3:${n(3)}`);
+});
+test('labels: the result is deterministic', () => {
+  const nodes = Array.from({ length: 30 }, (_, i) => LN(`n${i}`, 50 + (i * 97) % 700, 40 + (i * 53) % 320));
+  const order = nodes.map((x) => x.id);
+  const a = JSON.stringify([...choose(nodes, order)]), b = JSON.stringify([...choose([...nodes].reverse(), order)]);
+  assert(a === b, 'same order of priorities gives the same labels, whatever order the nodes are listed in');
+});
+test('labels: property check: over random layouts, zooms and priorities no label overlaps another label, covers a dot, or leaves the margins', () => {
+  let seed = 99; const rnd = (n) => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed % n; };
+  let drawn = 0;
+  for (let trial = 0; trial < 60; trial++) {
+    const nodes = Array.from({ length: 70 }, (_, i) => LN(`n${i}`, rnd(1600), rnd(800), 30 + rnd(90), 6 + 3 * rnd(2)));
+    const order = nodes.map((x) => x.id).sort(() => rnd(3) - 1);
+    const k = [0.3, 0.55, 1, 1.8, 3][rnd(5)], tx = -rnd(500), ty = -rnd(200), minX = rnd(2) ? 112 : 0;
+    const out = chooseLabels({ nodes, order, k, tx, ty, viewW: 900, viewH: 500, minX });
+    const rects = [...out].map(([id, l]) => ({ id, ...labelRect(l) }));
+    drawn += rects.length;
+    for (const a of rects) {
+      assert(a.x0 >= minX && a.x1 <= 900, `trial ${trial}: ${a.id} outside the margins`);
+      for (const n of nodes) {
+        if (n.id === a.id) continue;
+        const sx = n.x * k + tx, sy = n.y * k + ty, r = n.r * k;
+        assert(!(a.x0 < sx + r && sx - r < a.x1 && a.y0 < sy + r && sy - r < a.y1), `trial ${trial}: label ${a.id} covers the dot of ${n.id}`);
+      }
+      for (const b of rects) if (a.id < b.id) assert(!(a.x0 < b.x1 + 3 && b.x0 < a.x1 + 3 && a.y0 < b.y1 + 3 && b.y0 < a.y1 + 3), `trial ${trial}: labels ${a.id} and ${b.id} overlap`);
+    }
+  }
+  assert(drawn > 300, `the property check actually drew labels (${drawn})`);
+});
+test('labels: priority is impact first, then number of links, outside influences last, then id; withFirst moves ids to the front without duplicates', () => {
+  const nodes = [{ id: 'a', impact: 2 }, { id: 'b', impact: 3 }, { id: 'c', impact: 3 }, { id: 'g', impact: 3, ghost: true }, { id: 'd', impact: 3 }];
+  const degree = new Map([['a', 9], ['b', 1], ['c', 5], ['d', 5], ['g', 20]]);
+  assert(basePriority(nodes, degree).join() === 'c,d,b,a,g', basePriority(nodes, degree).join());
+  assert(withFirst(['x', 'y', 'z'], ['z', null, 'z', 'q', undefined]).join() === 'z,q,x,y');
+  assert(withFirst(['x', 'y'], []).join() === 'x,y');
+});
+
 /* ---------- widgets: Church (lambda calculus) ---------- */
 const CH = await fetch('../widgets/church.json').then((r) => r.json());
 const BS = '\\';
@@ -619,20 +721,21 @@ test('widgets: Quicksort input validation: count, range, whole numbers, and host
 
 /* ---------- real data ---------- */
 async function realData() {
-  const [papers, lanes, ghosts] = await Promise.all([
+  const [papers, lanes, ghosts, edges] = await Promise.all([
     fetch('../data/papers.json').then((r) => r.json()),
     fetch('../data/lanes.json').then((r) => r.json()),
     fetch('../data/ghosts.json').then((r) => r.json()),
+    fetch('../data/edges.json').then((r) => r.json()),
   ]);
   const xScale = makeXScale(X_SEGMENTS, 130); // the same axis the app uses
   const L = computeLayout({
     nodes: [
       ...papers.map((p) => ({ id: p.id, year: p.year, lane: p.primary_field, label: p.short, impact: p.conceptual_impact_1_3 })),
-      ...ghosts.map((g) => ({ id: g.id, year: g.year, lane: g.lane, label: `${g.title} (${g.year})`, impact: 2 })),
+      ...ghosts.map((g) => ({ id: g.id, year: g.year, lane: g.lane, label: `${g.title} (${g.year})`, impact: 2, ghost: true })),
     ],
     lanes, xScale,
   });
-  return { papers, ghosts, L, xScale };
+  return { papers, ghosts, edges, L, xScale, lanes };
 }
 let real;
 try { real = await realData(); } catch (e) { results.push({ name: 'real data: load', ok: false, msg: e.message }); }
@@ -646,7 +749,7 @@ if (real) {
     const early = L.nodes.filter((n) => n.year < 1908);
     assert(early.length >= 2 && early.every((n) => n.x < L.nodes.find((m) => m.id === 'CS001').x));
   });
-  test('real: no label overlaps within any lane/row', () => {
+  test('real: no two dots overlap within any lane/row (labels are placed separately, in screen space)', () => {
     for (const lane of L.lanes) {
       const byRow = new Map();
       for (const n of L.nodes.filter((n) => n.lane === lane.id)) {
@@ -656,11 +759,73 @@ if (real) {
       for (const [row, ns] of byRow) {
         ns.sort((a, b) => a.x - b.x);
         for (let i = 1; i < ns.length; i++) {
-          const prevRight = ns[i - 1].x + ns[i - 1].r + 4 + ns[i - 1].labelW;
-          assert(prevRight <= ns[i].x - ns[i].r, `overlap in ${lane.id} row ${row}: ${ns[i - 1].id}/${ns[i].id}`);
+          assert(ns[i - 1].x + ns[i - 1].r + 4 <= ns[i].x - ns[i].r, `dots overlap in ${lane.id} row ${row}: ${ns[i - 1].id}/${ns[i].id}`);
         }
       }
     }
+  });
+  test('real: with reserveLabels the old guarantee holds (no label overlaps in a row), at the cost of taller lanes', () => {
+    const R = computeLayout({
+      nodes: [
+        ...papers.map((p) => ({ id: p.id, year: p.year, lane: p.primary_field, label: p.short, impact: p.conceptual_impact_1_3 })),
+        ...ghosts.map((g) => ({ id: g.id, year: g.year, lane: g.lane, label: `${g.title} (${g.year})`, impact: 2 })),
+      ],
+      lanes: real.lanes, xScale: real.xScale, reserveLabels: true,
+    });
+    for (const lane of R.lanes) {
+      const byRow = new Map();
+      for (const n of R.nodes.filter((n) => n.lane === lane.id)) { if (!byRow.has(n.row)) byRow.set(n.row, []); byRow.get(n.row).push(n); }
+      for (const ns of byRow.values()) {
+        ns.sort((a, b) => a.x - b.x);
+        for (let i = 1; i < ns.length; i++) assert(ns[i - 1].x + ns[i - 1].r + 4 + ns[i - 1].labelW <= ns[i].x - ns[i].r, `label overlap ${ns[i - 1].id}/${ns[i].id}`);
+      }
+    }
+    assert(R.height > L.height, `reserved ${R.height} should exceed compact ${L.height}`);
+  });
+
+  // How many papers get named at fit zoom, with the panel open (the narrower, harder case): 1080 px wide.
+  const namedAtFit = (layoutNodes, edges, viewW = 1080, viewH = 640) => {
+    const nodes = layoutNodes.map((n) => ({ ...n, labelW: estimateTextWidth(n.label, 11) })); // the real labels are 11px
+    const degree = new Map();
+    for (const e of edges) { degree.set(e.from, (degree.get(e.from) || 0) + 1); degree.set(e.to, (degree.get(e.to) || 0) + 1); }
+    const order = basePriority(nodes, degree);
+    const worldW = Math.max(...nodes.map((n) => n.x + n.r + 4 + n.labelW)), worldH = Math.max(...nodes.map((n) => n.y)) * 1.08;
+    const k = Math.min(viewW / worldW, viewH / worldH);
+    return { order, shown: chooseLabels({ nodes, order, k, tx: 0, ty: 0, viewW, viewH, minX: 112 }), k };
+  };
+  test('real: at fit zoom (panel open) over half the papers are named, and the most important ones are favoured', () => {
+    const { order, shown } = namedAtFit(L.nodes, real.edges);
+    const ranked = order.filter((id) => id.startsWith('CS')); // papers, most important first
+    const named = ranked.filter((id) => shown.has(id)).length;
+    assert(named / papers.length >= 0.5, `${named} of ${papers.length} named`);
+    const share = (ids) => ids.filter((id) => shown.has(id)).length / ids.length;
+    // A crowded cluster can leave even an important paper without room (it is still named on hover or selection),
+    // so require most of the top ten, and a better rate for the top twenty than for the bottom twenty.
+    assert(ranked.slice(0, 10).filter((id) => shown.has(id)).length >= 8, `top ten not named: ${ranked.slice(0, 10).filter((id) => !shown.has(id))}`);
+    assert(share(ranked.slice(0, 20)) > share(ranked.slice(-20)), `top 20 ${share(ranked.slice(0, 20))} vs bottom 20 ${share(ranked.slice(-20))}`);
+  });
+  test('stand-ins: the 42 planned papers fit: about 121 papers, lanes stay compact, dots never overlap, and a useful share is still named', () => {
+    assert(STUB_COUNT === 42);
+    const bigger = withStubs({ papers: real.papers, edges: real.edges });
+    assert(bigger.papers.length === 79 + STUB_COUNT && new Set(bigger.papers.map((p) => p.id)).size === bigger.papers.length, 'unique ids');
+    const laneIds = new Set(real.lanes.map((l) => l.id));
+    assert(bigger.papers.every((p) => laneIds.has(p.primary_field)), 'every stand-in is in a real lane');
+    const B = computeLayout({
+      nodes: [
+        ...bigger.papers.map((p) => ({ id: p.id, year: p.year, lane: p.primary_field, label: p.short, impact: p.conceptual_impact_1_3 })),
+        ...ghosts.map((g) => ({ id: g.id, year: g.year, lane: g.lane, label: `${g.title} (${g.year})`, impact: 2, ghost: true })),
+      ],
+      lanes: real.lanes, xScale: real.xScale,
+    });
+    assert(B.height < L.height * 1.5, `lanes stayed compact: ${Math.round(B.height)} vs ${Math.round(L.height)}`);
+    for (const lane of B.lanes) {
+      const byRow = new Map();
+      for (const n of B.nodes.filter((n) => n.lane === lane.id)) { if (!byRow.has(n.row)) byRow.set(n.row, []); byRow.get(n.row).push(n); }
+      for (const ns of byRow.values()) { ns.sort((a, b) => a.x - b.x); for (let i = 1; i < ns.length; i++) assert(ns[i - 1].x + ns[i - 1].r + 4 <= ns[i].x - ns[i].r, `dots overlap: ${ns[i - 1].id}/${ns[i].id}`); }
+    }
+    const { shown } = namedAtFit(B.nodes, bigger.edges);
+    const named = bigger.papers.filter((p) => shown.has(p.id)).length;
+    assert(named / bigger.papers.length >= 0.4, `${named} of ${bigger.papers.length} named at fit with the panel open`);
   });
   test('real: x is non-decreasing with year across all papers', () => {
     const s = [...L.nodes].sort((a, b) => a.year - b.year);

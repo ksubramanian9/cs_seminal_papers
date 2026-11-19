@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Label preview (not a test)</title>
+<link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+<!--
+  A look at the canvas with the real 79 papers, or with 42 stand-in papers added (about 121),
+  to judge label legibility before any new paper is written.
+    labels-preview.html                  the real 79 papers
+    labels-preview.html?stubs=1          79 + 42 stand-ins
+    &zoom=N                              zoom in N wheel steps (each doubles) at the middle of the view
+    &sel=CS075                           select a paper
+-->
+<header class="app-header"><div><h1>Label preview</h1></div></header>
+<main class="app-main"><section id="canvas" class="canvas"></section></main>
+<script src="../vendor/d3.min.js"></script>
+<script type="module">
+import { loadAll } from '../js/data.js';
+import { createGraph } from '../js/graph.js';
+import { withStubs } from './stub-data.js';
+
+const q = new URLSearchParams(location.search);
+let data = await loadAll();
+if (q.get('stubs')) data = withStubs(data);
+const canvas = document.getElementById('canvas');
+const graph = createGraph(canvas, data, { animate: false });
+window.__graph = graph;
+const steps = Number(q.get('zoom') || 0);
+const svg = canvas.querySelector('.main-svg');
+for (let i = 0; i < steps; i++) {
+  const r = svg.getBoundingClientRect();
+  svg.dispatchEvent(new WheelEvent('wheel', { deltaY: -500, clientX: r.left + r.width * (Number(q.get('fx') || 0.5)), clientY: r.top + r.height * (Number(q.get('fy') || 0.5)), bubbles: true, cancelable: true }));
+}
+if (q.get('sel')) graph.select(q.get('sel'));
+
+// For headless checks: how many dots are in view, and how many of them carry a label.
+const view = canvas.querySelector('.stage').getBoundingClientRect();
+const inView = (r) => r.left >= view.left && r.right <= view.right && r.top >= view.top && r.bottom <= view.bottom;
+const dots = [...canvas.querySelectorAll('.node:not(.ghost) circle')].filter((c) => inView(c.getBoundingClientRect())).length;
+const named = [...canvas.querySelectorAll('.labels .label:not(.ghost)')].filter((t) => t.style.display !== 'none' && inView(t.getBoundingClientRect())).length;
+const onDots = [...canvas.querySelectorAll('.node.on circle')].filter((c) => inView(c.getBoundingClientRect())).length;
+const onNamed = [...canvas.querySelectorAll('.labels .label.on')].filter((t) => t.style.display !== 'none' && inView(t.getBoundingClientRect())).length;
+document.title = `papers in view ${dots}, labelled ${named}` + (q.get('sel') ? `; lineage in view ${onDots}, lineage labelled ${onNamed}` : '');
+</script>
+</body>
+</html>
