@@ -339,6 +339,9 @@ button.link-body:hover, button.link-body:focus-visible { background: var(--hover
 .widget-btn:focus-visible, .widget-inputs input:focus-visible { outline: 2px solid var(--anc); outline-offset: 2px; }
 .widget-btn:disabled { opacity: 0.45; cursor: default; }
 .widget-caption { margin: 0.6rem 0 0; font-size: 0.78rem; line-height: 1.45; color: var(--muted); }
+.widget-reference:empty { display: none; }
+.widget-reference { margin-top: 0.6rem; }
+.widget-reference caption { caption-side: top; text-align: left; padding: 0 0 0.25rem; font-size: 0.75rem; color: var(--muted); }
 
 /* Turing machine model */
 .tm-tape { display: block; width: 100%; height: auto; }

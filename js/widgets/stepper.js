@@ -7,7 +7,9 @@
  *   model.inputs(config)            -> [{ id, label, value, maxLength, hint }]   (optional)
  *   model.validate(values, config)  -> error string or null                      (optional)
  *   model.build(config, values)     -> { frames: [{ note, ... }], ... }
- *   model.render(host, built, frame, index)
+ *   model.render(host, built, frame, index, reference)
+ *       draws what changes each step into `host`; reference material that stays put (a rule table)
+ *       goes into `reference`, which the stepper places after the controls and caption.
  *
  * Contract with the loader: mount(container, config) returns { destroy() }; destroy() clears the
  * play timer and removes the listener this module added outside the widget's own DOM.
@@ -76,8 +78,11 @@ export function mount(host, config) {
   const bStep = btn('Step ▶', 'Step forward');
   const controls = el('div', { class: 'widget-controls' }, bReset, bBack, bPlay, bStep, counter);
   const caption = config.caption ? el('p', { class: 'widget-caption' }, config.caption) : null;
+  // Reference material (a rule table, a list of definitions) sits after the controls and caption, so
+  // what changes with every step stays together. It is hidden while empty.
+  const reference = el('div', { class: 'widget-reference' });
 
-  for (const n of [title, form, errorEl, stage, status, controls, caption]) if (n) root.append(n);
+  for (const n of [title, form, errorEl, stage, status, controls, caption, reference]) if (n) root.append(n);
   host.append(root);
 
   /* ---------- behaviour ---------- */
@@ -91,7 +96,8 @@ export function mount(host, config) {
     if (destroyed || !built) return;
     const i = state.index;
     const frame = built.frames[i];
-    model.render(stage, built, frame, i);
+    reference.textContent = '';
+    model.render(stage, built, frame, i, reference);
     status.textContent = frame.note ?? '';
     counter.textContent = `Step ${i} of ${state.count - 1}`;
     bReset.disabled = state.atStart;

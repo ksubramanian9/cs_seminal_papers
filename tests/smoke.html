@@ -591,6 +591,27 @@ await check('widget CS016: another list (commas allowed), and invalid input', as
   }
 });
 
+await check('widget layout: the picture, status and controls stay together; the reference table comes after the caption', async () => {
+  const after = (a, b) => !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING); // b follows a
+  for (const [id, picture, table] of [['CS004', '.tm-tape', '.tm-rules'], ['CS003', '.lc-term', '.lc-defs']]) {
+    await selectWidgetPaper(id);
+    const ref = wq('.widget-reference');
+    assert(ref && ref.contains(wq(table)) && !wq('.widget-stage').contains(wq(table)), `${id}: the table lives in the reference area, not the stage`);
+    assert(after(wq(picture), wq('.widget-status')) && after(wq('.widget-status'), wq('.widget-controls')), `${id}: picture, then status, then controls`);
+    assert(after(wq('.widget-controls'), wq('.widget-caption')) && after(wq('.widget-caption'), wq(table)), `${id}: controls, then caption, then the table`);
+    assert(wq(`${table} caption`)?.textContent.length > 15, `${id}: the table says what it is`);
+    click(wbtn(/Step/));
+    assert(ref.contains(wq(table)) && ref.querySelectorAll('table').length === 1, `${id}: stepping redraws the table in place, never duplicates it`);
+  }
+  await selectWidgetPaper('CS004'); click(wbtn(/Step/));
+  assert(panelEl.querySelectorAll('.widget-reference .tm-rules tr.active').length === 1, 'the highlighted rule is still shown after the move');
+  for (const id of ['CS013', 'CS016']) {
+    await selectWidgetPaper(id);
+    const ref = wq('.widget-reference');
+    assert(ref && ref.childElementCount === 0 && getComputedStyle(ref).display === 'none', `${id}: no reference material, so the area is hidden`);
+  }
+});
+
 await check('widgets: moving between all four widget papers, and closing, leaves no widget or timer behind', async () => {
   for (let round = 0; round < 3; round++) {
     for (const id of ['CS003', 'CS013', 'CS016', 'CS004']) { await selectWidgetPaper(id); click(wbtn(/Play/)); await sleep(20); }

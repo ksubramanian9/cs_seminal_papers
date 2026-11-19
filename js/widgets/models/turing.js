@@ -112,8 +112,8 @@ const svgEl = (tag, attrs = {}, text) => {
   return n;
 };
 
-/** Draw one frame into `host`: the tape with its head, then the rule table with the applied rule highlighted. */
-export function render(host, built, frame) {
+/** Draw one frame: the tape with its head into `host`, the rule table (applied rule highlighted) into `reference`. */
+export function render(host, built, frame, _index, reference) {
   const { lo, hi, config } = built;
   const blank = config.blank ?? '_';
   const count = hi - lo + 1;
@@ -137,6 +137,7 @@ export function render(host, built, frame) {
 
   const table = document.createElement('table');
   table.className = 'tm-rules';
+  table.createCaption().textContent = 'The machine’s rules. The one just applied is highlighted.';
   const head = table.createTHead().insertRow();
   for (const h of ['state', 'read', 'write', 'move', 'next']) {
     const th = document.createElement('th');
@@ -154,5 +155,6 @@ export function render(host, built, frame) {
   });
 
   host.textContent = '';
-  host.append(svg, table);
+  host.append(svg);
+  reference.append(table);
 }

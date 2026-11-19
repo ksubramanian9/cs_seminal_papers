@@ -332,7 +332,7 @@ export function build(config, values) {
   return { ...reduce(config, String(values.expr ?? config.input)), config };
 }
 
-export function render(host, built, frame) {
+export function render(host, built, frame, _index, reference) {
   const term = document.createElement('p');
   term.className = 'lc-term';
   term.setAttribute('aria-label', `Expression: ${frame.segs.map((s) => s.t).join('')}`);
@@ -345,6 +345,7 @@ export function render(host, built, frame) {
 
   const table = document.createElement('table');
   table.className = 'lc-defs';
+  table.createCaption().textContent = 'Names and numerals you can use in an expression.';
   const head = table.createTHead().insertRow();
   for (const h of ['name', 'meaning', 'definition']) {
     const th = document.createElement('th');
@@ -363,5 +364,6 @@ export function render(host, built, frame) {
   }
 
   host.textContent = '';
-  host.append(term, table);
+  host.append(term);
+  reference.append(table);
 }
