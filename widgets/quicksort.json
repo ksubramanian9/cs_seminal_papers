@@ -1,0 +1,8 @@
+{
+  "model": "quicksort",
+  "title": "Quicksort: split around a pivot, then sort each side",
+  "caption": "Each round picks the first number of the range as the pivot. Two pointers walk in from the ends and swap any pair that sits on the wrong side of the pivot. When they meet, everything on the left is no larger and everything on the right is no smaller, so the two sides can be sorted separately. This is the partition scheme Hoare published in 1962.",
+  "input": "5 2 9 1 7 3 8 6",
+  "maxCount": 10,
+  "maxValue": 99
+}

@@ -18,6 +18,9 @@ import { makeXScale, stackNodes, computeLayout, radiusFor, ROW_H, X_SEGMENTS } f
 import { validateData, wordCount, requiredFiles } from '../js/validate.js';
 import { resolveTheme, createThemeToggle, safeStorage } from '../js/theme.js';
 import { run as tmRun, validate as tmValidate, inputs as tmInputs } from '../js/widgets/models/turing.js';
+import * as church from '../js/widgets/models/church.js';
+import * as dijkstra from '../js/widgets/models/dijkstra.js';
+import * as quicksort from '../js/widgets/models/quicksort.js';
 import { createStepperState } from '../js/widgets/stepper-state.js';
 import { WIDGET_TYPE_NAMES } from '../js/widgets/types.js';
 import { setTimer, clearTimer, widgetStats } from '../js/widgets/registry.js';
@@ -394,6 +397,224 @@ test('widgets: the five type names are fixed, and the validator accepts good wid
   assert(/no config/.test(problemsOf(validateData(noCfg), 'R2')));
   const str = baseData(); str.explanations.A.widget = 'stepper';
   assert(statusOf(validateData(str), 'R2') === 'fail', 'a widget that is not an object fails');
+});
+
+/* ---------- widgets: Church (lambda calculus) ---------- */
+const CH = await fetch('../widgets/church.json').then((r) => r.json());
+const BS = '\\';
+const redu = (src, cfg = CH) => church.reduce(cfg, src);
+const lastTerm = (r) => r.frames.at(-1).term;
+
+test('widgets: the Church config is well formed and every definition parses', () => {
+  assert(CH.model === 'church' && CH.caption.length > 40 && CH.maxSteps > 0);
+  for (const name of ['SUCC', 'ADD', 'MUL']) assert(CH.definitions[name]?.source && CH.definitions[name].gloss, name);
+  const defs = church.makeDefinitions(CH);
+  assert(defs.size === 13 && defs.get('ADD').text === 'λm.λn.λf.λx.m f (n f x)', 'ten numerals plus three names');
+  assert(church.validate({ expr: CH.input }, CH) === null, 'the default expression is valid');
+});
+test('widgets: ADD, MUL and SUCC give the right numeral for every pair of 0 to 4 (exhaustive)', () => {
+  for (let a = 0; a <= 4; a++) {
+    const s = redu(`SUCC ${a}`);
+    assert(s.normal && s.numeral === a + 1, `SUCC ${a} -> ${s.numeral}`);
+    for (let b = 0; b <= 4; b++) {
+      const add = redu(`ADD ${a} ${b}`), mul = redu(`MUL ${a} ${b}`);
+      assert(add.normal && add.numeral === a + b, `ADD ${a} ${b} -> ${add.numeral}`);
+      assert(mul.normal && mul.numeral === a * b, `MUL ${a} ${b} -> ${mul.numeral}`);
+    }
+  }
+  assert(redu('MUL 9 9').numeral === 81, 'the largest input still finishes inside the step limit');
+  assert(redu('ADD 2 3').frames.length === 10, 'ADD 2 3 takes 9 steps (10 frames)');
+});
+test('widgets: substitution renames a bound variable instead of capturing a free one', () => {
+  const r = redu(`(${BS}x.${BS}y.x) y`);
+  const t = lastTerm(r);
+  assert(r.normal && t.k === 'abs' && t.b.k === 'var' && t.v !== t.b.n && t.b.n === 'y', `got ${church.show(t)}: the free y must stay free`);
+  assert(/renamed/.test(r.frames.at(-1).note), 'the step says it renamed a variable');
+  const k = redu(`(${BS}x.${BS}y.x) y y`);
+  assert(church.show(lastTerm(k)) === 'y', 'K y y = y');
+});
+test('widgets: reduction is normal order: an argument that never finishes is discarded if it is unused', () => {
+  const r = redu(`(${BS}x.y)((${BS}z.z z)(${BS}z.z z))`);
+  assert(r.normal && church.show(lastTerm(r)) === 'y' && r.frames.length === 2, `got ${church.show(lastTerm(r))} in ${r.frames.length} frames`);
+});
+test('widgets: reduction also happens inside function bodies', () => {
+  const r = redu(`${BS}z.(${BS}x.x) z`);
+  assert(r.normal && church.show(lastTerm(r)) === 'λz.z');
+});
+test('widgets: a term that reduces to itself is recognised as a loop and stops at once', () => {
+  const r = redu(`(${BS}x.x x)(${BS}x.x x)`);
+  assert(r.loop && !r.normal && !r.truncated && r.frames.length === 2, `frames ${r.frames.length}`);
+  assert(/never finish/.test(r.frames.at(-1).note) && /Church proved/.test(r.frames.at(-1).note));
+});
+test('widgets: a term that keeps growing is cut off by the size limit, and the step limit also holds', () => {
+  const g = redu(`(${BS}x.x x x)(${BS}x.x x x)`);
+  assert(g.truncated && g.truncatedBy === 'size' && g.frames.length < 200 && /too large/.test(g.frames.at(-1).note), `by ${g.truncatedBy}`);
+  const s = redu('MUL 3 3', { ...CH, maxSteps: 5 });
+  assert(s.truncated && s.truncatedBy === 'steps' && !s.normal && s.frames.length === 6 && /Stopped after 5 steps/.test(s.frames.at(-1).note));
+});
+test('widgets: exactly the next step is highlighted, once, and nothing is highlighted at the end', () => {
+  for (const src of ['ADD 2 3', 'MUL 2 2', 'SUCC (SUCC 1)']) {
+    const r = redu(src);
+    r.frames.forEach((f, i) => {
+      const hl = f.segs.filter((s) => s.hl).length;
+      if (i === r.frames.length - 1) assert(hl === 0 && f.mark === null, `${src}: last frame has a highlight`);
+      else assert(hl > 0, `${src}: frame ${i} has no highlight`);
+      if (f.mark && f.mark.k === 'const') assert(hl === 1 && f.segs.find((s) => s.hl).t === f.mark.n, `${src}: frame ${i} highlights one name`);
+    });
+  }
+});
+test('widgets: the printer and parser agree (print, re-parse, print again gives the same text)', () => {
+  const known = (n) => n in CH.definitions;
+  for (const src of [`${BS}f x.f (f x)`, 'x y z', 'x (y z)', `(${BS}x.x) y`, `${BS}x.${BS}y.x y`, `x (${BS}y.y)`, 'ADD (SUCC 1) 2']) {
+    const t = church.parse(src, known);
+    assert(church.show(church.parse(church.show(t), known)) === church.show(t), src);
+  }
+  assert(church.show(church.parse('x y z', known)) === 'x y z' && church.show(church.parse('x (y z)', known)) === 'x (y z)', 'application is left-associative');
+  assert(church.show(church.parse(`${BS}f x.f x`, known)) === 'λf.λx.f x' && church.show(church.parse('λx.x', known)) === 'λx.x', 'backslash and λ both work');
+});
+test('widgets: input validation explains each kind of mistake, and hostile text never gets through', () => {
+  const v = (s) => church.validate({ expr: s }, CH);
+  assert(v('ADD 2 3') === null && v(`(${BS}x.x) y`) === null && v('SUCC (SUCC 0)') === null);
+  assert(/Type an expression/.test(v('')) && /Type an expression/.test(v('   ')));
+  assert(/not a known name/.test(v('FOO 1')) && /0 to 9/.test(v('12')) && /not closed/.test(v('(x')) && /closing parenthesis/.test(v('x)')));
+  assert(/followed by a variable/.test(v(`${BS}.x`)) && /dot/.test(v(`${BS}x x`)) && /ends too soon/.test(v('x (')), v('x ('));
+  assert(/at most 40/.test(v('x '.repeat(30))), 'length limit');
+  for (const s of ['<img src=x onerror=1>', 'x;y', 'ADD 2 3"', '<script>alert(1)<\/script>', 'ADD 2 3 // hi', 'x=y']) assert(/Use only letters/.test(v(s)), `not rejected as expected: ${s}`);
+});
+
+/* ---------- widgets: Dijkstra ---------- */
+const DJ = await fetch('../widgets/dijkstra.json').then((r) => r.json());
+function floyd(nodes, edges) {
+  const ids = nodes.map((n) => n.id), d = {};
+  for (const a of ids) { d[a] = {}; for (const b of ids) d[a][b] = a === b ? 0 : Infinity; }
+  for (const e of edges) { d[e.a][e.b] = Math.min(d[e.a][e.b], e.w); d[e.b][e.a] = Math.min(d[e.b][e.a], e.w); }
+  for (const k of ids) for (const i of ids) for (const j of ids) if (d[i][k] + d[k][j] < d[i][j]) d[i][j] = d[i][k] + d[k][j];
+  return d;
+}
+test('widgets: the Dijkstra config is well formed (unique nodes, valid edges, everything inside the drawing)', () => {
+  assert(DJ.model === 'dijkstra' && DJ.caption.length > 40 && DJ.nodes.length === 6 && DJ.edges.length === 9);
+  const ids = DJ.nodes.map((n) => n.id);
+  assert(new Set(ids).size === ids.length && ids.every((i) => /^[A-Z]$/.test(i)) && ids.includes(DJ.source));
+  assert(DJ.edges.every((e) => ids.includes(e.a) && ids.includes(e.b) && e.a !== e.b && Number.isInteger(e.w) && e.w > 0));
+  assert(DJ.nodes.every((n) => n.x >= 20 && n.x <= 380 && n.y >= 20 && n.y <= 150), 'inside the 400x190 drawing with room for labels');
+});
+test('widgets: from every start node the distances match an independent all-pairs computation', () => {
+  const want = floyd(DJ.nodes, DJ.edges);
+  for (const s of DJ.nodes.map((n) => n.id)) {
+    const r = dijkstra.shortestPaths(DJ.nodes, DJ.edges, s);
+    for (const t of Object.keys(want[s])) assert(r.dist[t] === want[s][t], `${s}->${t}: ${r.dist[t]} vs ${want[s][t]}`);
+  }
+  const a = dijkstra.shortestPaths(DJ.nodes, DJ.edges, 'A');
+  assert(JSON.stringify(a.dist) === '{"A":0,"B":3,"C":2,"D":8,"E":10,"F":13}', 'hand-computed distances from A');
+  assert(a.order.join('') === 'ACBDEF', 'settled in order of distance');
+  assert(dijkstra.pathTo(a, 'F').join('>') === 'A>C>B>D>E>F', 'hand-traced route to F: 2+1+5+2+3 = 13');
+});
+test('widgets: random graphs agree with the independent computation (300 graphs, including unreachable nodes)', () => {
+  let seed = 12345;
+  const rnd = (n) => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed % n; };
+  for (let g = 0; g < 300; g++) {
+    const n = 2 + rnd(6), nodes = Array.from({ length: n }, (_, i) => ({ id: String.fromCharCode(65 + i) }));
+    const edges = [];
+    for (let k = rnd(n * 2); k > 0; k--) { const a = rnd(n), b = rnd(n); if (a !== b) edges.push({ a: nodes[a].id, b: nodes[b].id, w: rnd(9) }); }
+    const want = floyd(nodes, edges), s = nodes[rnd(n)].id;
+    const r = dijkstra.shortestPaths(nodes, edges, s);
+    for (const t of nodes) assert(r.dist[t.id] === want[s][t.id], `graph ${g}: ${s}->${t.id} ${r.dist[t.id]} vs ${want[s][t.id]}`);
+  }
+});
+test('widgets: Dijkstra frames only ever improve, settle in non-decreasing order, and end with everything reachable settled', () => {
+  const r = dijkstra.shortestPaths(DJ.nodes, DJ.edges, 'A');
+  const f0 = r.frames[0];
+  assert(f0.dist.A === 0 && Object.values(f0.dist).filter((x) => x === Infinity).length === 5 && f0.done.length === 0 && f0.edge === null);
+  for (let i = 1; i < r.frames.length; i++) {
+    const a = r.frames[i - 1], b = r.frames[i];
+    for (const k of Object.keys(b.dist)) assert(b.dist[k] <= a.dist[k], `frame ${i}: ${k} got worse`);
+    assert(b.done.length >= a.done.length && a.done.every((x) => b.done.includes(x)), 'settled nodes stay settled');
+    if (b.improved) assert(b.dist[b.improved] < a.dist[b.improved] && b.prev[b.improved] === b.current, `frame ${i}: improvement is recorded`);
+    else for (const k of Object.keys(b.dist)) assert(b.dist[k] === a.dist[k], `frame ${i}: no improvement, no change`);
+    if (b.edge) assert(b.edge.a === b.current && !b.done.includes(b.edge.b), 'an edge is only examined from the node being settled, to an unsettled one');
+  }
+  const order = r.frames.at(-1).done.map((id) => r.dist[id]);
+  assert(order.every((d, i) => i === 0 || d >= order[i - 1]), 'settled in non-decreasing distance');
+  assert(r.frames.at(-1).done.length === 6 && /Done\./.test(r.frames.at(-1).note) && r.frames.length === 17);
+  assert(r.frames.some((f) => /Update B to 3, reached via C/.test(f.note)), 'B improves from 4 to 3 through C');
+  const fromD = dijkstra.shortestPaths(DJ.nodes, DJ.edges, 'D');
+  assert(fromD.frames.some((f) => /not shorter/.test(f.note)) && fromD.frames.some((f) => f.improved), 'from D, both kinds of edge check appear');
+});
+test('widgets: a node that cannot be reached stays at infinity, is reported, and nothing hangs', () => {
+  const nodes = [{ id: 'A' }, { id: 'B' }, { id: 'C' }], edges = [{ a: 'A', b: 'B', w: 2 }];
+  const r = dijkstra.shortestPaths(nodes, edges, 'A');
+  assert(r.dist.C === Infinity && dijkstra.pathTo(r, 'C') === null && /C cannot be reached/.test(r.frames.at(-1).note));
+  assert(dijkstra.pathTo(r, 'B').join('') === 'AB');
+  const z = dijkstra.shortestPaths(nodes, [{ a: 'A', b: 'B', w: 0 }, { a: 'B', b: 'C', w: 0 }], 'A');
+  assert(z.dist.C === 0, 'zero-weight edges are fine');
+});
+test('widgets: Dijkstra input validation accepts either case and rejects everything else', () => {
+  const v = (s) => dijkstra.validate({ start: s }, DJ);
+  assert(v('A') === null && v('f') === null && v(' c ') === null);
+  assert(v('') && v('Z') && v('AB') && v('1') && v('<b>') && v('"'));
+  assert(dijkstra.inputs(DJ)[0].value === 'A' && dijkstra.inputs(DJ)[0].maxLength === 1);
+  assert(dijkstra.build(DJ, { start: 'f' }).source === 'F', 'lower case is normalised');
+});
+
+/* ---------- widgets: Quicksort ---------- */
+const QS = await fetch('../widgets/quicksort.json').then((r) => r.json());
+test('widgets: the Quicksort config is well formed and its default input is valid', () => {
+  assert(QS.model === 'quicksort' && QS.caption.length > 40 && QS.maxCount === 10 && QS.maxValue === 99);
+  assert(quicksort.validate({ list: QS.input }, QS) === null && quicksort.inputs(QS)[0].value === QS.input);
+});
+test('widgets: Quicksort sorts every list of 2 to 6 numbers over four values (exhaustive, so duplicates are covered)', () => {
+  function* lists(n, k) { if (n === 0) { yield []; return; } for (const rest of lists(n - 1, k)) for (let v = 0; v < k; v++) yield [v, ...rest]; }
+  let count = 0;
+  for (let n = 2; n <= 6; n++) for (const l of lists(n, 4)) {
+    count++;
+    const r = quicksort.sortFrames(l);
+    assert(r.sorted.join() === [...l].sort((a, b) => a - b).join(), `${l.join()} -> ${r.sorted.join()}`);
+    assert(r.frames.at(-1).done.length === n, `${l.join()}: every number is settled at the end`);
+  }
+  assert(count === 4 ** 2 + 4 ** 3 + 4 ** 4 + 4 ** 5 + 4 ** 6);
+});
+test('widgets: Quicksort frames: a swap changes exactly the two pointed-at places, everything else is unchanged', () => {
+  const r = quicksort.sortFrames([5, 2, 9, 1, 7, 3, 8, 6]);
+  const vals = (f) => f.items.map((x) => x.v);
+  for (let k = 1; k < r.frames.length; k++) {
+    const a = r.frames[k - 1], b = r.frames[k];
+    assert([...b.items.map((x) => x.id)].sort((p, q) => p - q).join() === '0,1,2,3,4,5,6,7', 'frame ' + k + ' still has every element once');
+    const diff = vals(a).map((v, i) => (v !== vals(b)[i] ? i : -1)).filter((i) => i >= 0);
+    if (b.swapped) assert(b.swapped.join() === [b.i, b.j].join() && diff.length === 2 && diff.every((i) => b.swapped.includes(i)), `frame ${k}: swap`);
+    else assert(diff.length === 0, `frame ${k}: only swap frames change the order`);
+    assert(b.done.length >= a.done.length && a.done.every((x) => b.done.includes(x)), 'settled stays settled');
+  }
+  assert(r.frames[0].swapped === null && r.frames[0].range === null && r.frames.at(-1).range === null);
+  assert(r.frames.length === 28, `8 numbers give 28 frames, got ${r.frames.length}`);
+  assert(vals(r.frames[3]).join() === '3,2,9,1,7,5,8,6', 'the first swap exchanges 5 and 3 (hand-computed)');
+});
+test('widgets: Quicksort pointers stay inside the range, and a split always leaves both sides non-empty', () => {
+  for (const l of [[5, 2, 9, 1, 7, 3, 8, 6], [3, 3, 3, 3], [1, 2, 3, 4, 5, 6], [6, 5, 4, 3, 2, 1], [2, 1]]) {
+    const r = quicksort.sortFrames(l);
+    for (const f of r.frames) {
+      if (f.range && f.i != null) {
+        const [lo, hi] = f.range;
+        assert(f.i >= lo && f.i <= hi && f.j >= lo && f.j <= hi, `${l.join()}: pointer outside range ${lo}-${hi}`);
+        if (/crossed|met/.test(f.note)) assert(f.j >= lo && f.j < hi && f.i >= f.j, `${l.join()}: split at ${f.j} of ${lo}-${hi}`);
+      }
+    }
+  }
+});
+test('widgets: Quicksort handles sorted, reverse-sorted and all-equal input without looping', () => {
+  for (const l of [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9], [9, 8, 7, 6, 5, 4, 3, 2, 1, 0], [7, 7, 7, 7, 7, 7, 7, 7, 7, 7]]) {
+    const r = quicksort.sortFrames(l);
+    assert(r.frames.length < 150 && r.sorted.join() === [...l].sort((a, b) => a - b).join(), `${l.join()}: ${r.frames.length} frames`);
+  }
+});
+test('widgets: Quicksort input validation: count, range, whole numbers, and hostile text', () => {
+  const v = (s) => quicksort.validate({ list: s }, QS);
+  assert(v('5 2 9 1') === null && v('5,2,9,1') === null && v('  3   1  ') === null && v('0 99') === null);
+  assert(/at least 2/.test(v('')) && /at least 2/.test(v('5')) && /at most 10/.test(v('1 2 3 4 5 6 7 8 9 10 11')));
+  assert(v('1 -2') && v('1 2.5') && v('1 100') && v('1 abc') && v('1 0x5') && v('1 1e2'));
+  for (const s of ['<img src=x onerror=1> 2', '1 2<script>', '1 "2"', '1;2']) assert(v(s) !== null, s);
+  const longNum = v('1 ' + '9'.repeat(30));
+  assert(longNum && longNum.length < 60, 'a very long token is shortened in the message');
+  assert(quicksort.build(QS, { list: '3, 1 ,2' }).sorted.join() === '1,2,3', 'commas and extra spaces are fine');
 });
 
 /* ---------- real data ---------- */

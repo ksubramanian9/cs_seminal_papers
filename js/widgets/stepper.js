@@ -16,8 +16,11 @@
 import { createStepperState } from './stepper-state.js';
 import { setTimer, clearTimer } from './registry.js';
 import * as turing from './models/turing.js';
+import * as church from './models/church.js';
+import * as dijkstra from './models/dijkstra.js';
+import * as quicksort from './models/quicksort.js';
 
-const MODELS = { turing };
+const MODELS = { turing, church, dijkstra, quicksort };
 const DEFAULT_SPEED_MS = 900;
 
 function el(tag, props = {}, ...children) {

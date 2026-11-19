@@ -175,7 +175,7 @@ A small widget library with a common contract: a widget module exports `mount(co
 | CS004 Turing | 1910–39 | Foundations | Run a tiny Turing machine: tape, head, state and rule table | stepper |
 | CS008 Shannon | 1940–61 | Information theory | Edit symbol probabilities; see entropy in bits, the compression limit and a noisy channel | slider model |
 | CS013 Dijkstra | 1940–61 | Algorithms | Settle nodes of a small map in order of distance, with the distance table updating | stepper |
-| CS016 Quicksort | 1962–69 | Algorithms | Pick a pivot, partition, recurse; compare with a slow sort | stepper |
+| CS016 Quicksort | 1962–69 | Algorithms | Pick a pivot, partition with two pointers, recurse (built; the comparison with a slow sort was dropped to keep the widget focused) | stepper |
 | CS021 Amdahl | 1962–69 | Architecture | Sliders for parallel fraction and processors; a speedup curve that flattens | slider model |
 | CS034 Brooks | 1970–79 | Software engineering | Team size against time to finish, with communication paths growing as n(n−1)/2 | slider model |
 | CS048 Backpropagation | 1980–94 | AI and ML | Train a tiny network: forward pass, error passed back, weights nudged | training loop |

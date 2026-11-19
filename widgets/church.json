@@ -1,0 +1,15 @@
+{
+  "model": "church",
+  "title": "Arithmetic from nothing but functions",
+  "caption": "Church's lambda calculus has only functions and function application, yet numbers and addition can be built from them. Each step replaces a name by its definition or applies a function to its argument. Try (\\x.x x)(\\x.x x): it never finishes, which is the kind of question Church showed no general method can settle.",
+  "input": "ADD 2 3",
+  "maxLength": 40,
+  "maxSteps": 150,
+  "maxSize": 500,
+  "hint": "Try ADD 2 3, MUL 2 3 or SUCC (SUCC 0). Type \\ for λ.",
+  "definitions": {
+    "SUCC": { "source": "λn.λf.λx.f (n f x)", "gloss": "add one" },
+    "ADD": { "source": "λm.λn.λf.λx.m f (n f x)", "gloss": "add two numbers" },
+    "MUL": { "source": "λm.λn.λf.m (n f)", "gloss": "multiply two numbers" }
+  }
+}

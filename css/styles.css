@@ -348,8 +348,59 @@ button.link-body:hover, button.link-body:focus-visible { background: var(--hover
 .tm-sym.blank { fill: var(--muted); font-weight: 400; }
 .tm-head { fill: var(--anc); }
 .tm-state { font: 700 12px var(--font); fill: var(--anc); }
-.tm-rules { width: 100%; margin-top: 0.4rem; border-collapse: collapse; font-size: 0.78rem; }
-.tm-rules th, .tm-rules td { padding: 0.2rem 0.4rem; text-align: left; border-bottom: 1px solid var(--border); }
-.tm-rules th { color: var(--muted); font-weight: 600; text-transform: uppercase; font-size: 0.68rem; letter-spacing: 0.03em; }
-.tm-rules td { font-family: ui-monospace, Consolas, "Courier New", monospace; }
+.tm-rules, .lc-defs { width: 100%; margin-top: 0.4rem; border-collapse: collapse; font-size: 0.78rem; }
+.tm-rules th, .tm-rules td, .lc-defs th, .lc-defs td { padding: 0.2rem 0.4rem; text-align: left; border-bottom: 1px solid var(--border); }
+.tm-rules th, .lc-defs th { color: var(--muted); font-weight: 600; text-transform: uppercase; font-size: 0.68rem; letter-spacing: 0.03em; }
+.tm-rules td, .lc-defs td { font-family: ui-monospace, Consolas, "Courier New", monospace; }
 .tm-rules tr.active td { background: var(--hover-link); color: var(--text); font-weight: 700; }
+.lc-defs td:nth-child(2) { font-family: var(--font); }
+
+/* Lambda calculus model */
+.lc-term {
+  margin: 0.3rem 0; padding: 0.6rem 0.7rem; min-height: 3.2em; overflow-wrap: anywhere;
+  font: 600 0.95rem/1.7 ui-monospace, Consolas, "Courier New", monospace; color: var(--text);
+  background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+}
+.lc-redex { background: var(--hover-link); box-shadow: 0 0 0 2px var(--anc); border-radius: 3px; }
+
+/* Dijkstra model */
+.dj-graph { display: block; width: 100%; height: auto; }
+.dj-edge { stroke: var(--tick); stroke-width: 1.6; }
+.dj-edge.tree { stroke: var(--anc); stroke-width: 4; }
+.dj-edge.look { stroke: var(--desc); stroke-width: 4; stroke-dasharray: 6 4; }
+.dj-wbg { fill: var(--bg); }
+.dj-w { font: 600 11px var(--font); fill: var(--text-soft); }
+.dj-w.look { fill: var(--desc); font-weight: 800; }
+.dj-node { fill: var(--surface); stroke: var(--tick); stroke-width: 2; }
+.dj-node.done { fill: var(--anc); stroke: var(--anc); }
+.dj-node.current { stroke: var(--sel); stroke-width: 3.5; }
+.dj-node.improved { stroke: var(--desc); stroke-width: 4; }
+.dj-label { font: 700 14px var(--font); fill: var(--text); pointer-events: none; }
+.dj-node.done + .dj-label { fill: var(--bg); }
+.dj-dists { display: flex; flex-wrap: wrap; gap: 0.3rem; margin: 0.3rem 0 0; }
+.dj-chip {
+  padding: 0.15rem 0.5rem; border: 1px solid var(--border); border-radius: 999px; background: var(--surface);
+  font: 600 0.8rem ui-monospace, Consolas, "Courier New", monospace; color: var(--text);
+}
+.dj-chip b { font-family: var(--font); margin-right: 0.15em; }
+.dj-chip.inf { color: var(--muted); font-weight: 400; }
+.dj-chip.done { background: var(--anc); border-color: var(--anc); color: var(--bg); }
+.dj-chip.improved { border-color: var(--desc); box-shadow: 0 0 0 2px var(--desc); }
+.dj-info { margin: 0.2rem 0 0; font-size: 0.8rem; color: var(--text-soft); }
+
+/* Quicksort model */
+.qs-chart { display: block; width: 100%; height: auto; }
+.qs-range { fill: var(--hover-link); stroke: var(--border); stroke-width: 1; }
+.qs-bar { fill: var(--tick); }
+.qs-bar.out { opacity: 0.45; }
+.qs-bar.pivot { fill: var(--desc); }
+.qs-bar.swapped { fill: var(--rival); }
+.qs-bar.done { fill: var(--anc); opacity: 1; }
+.qs-val { font: 700 11px ui-monospace, Consolas, monospace; fill: var(--text); }
+.qs-ptr { fill: var(--text); }
+.qs-ptr-label { font: 700 12px var(--font); fill: var(--text); }
+.qs-legend { display: flex; flex-wrap: wrap; gap: 0.2rem 0.9rem; margin: 0.2rem 0 0; font-size: 0.75rem; color: var(--muted); }
+.qs-key::before { content: ""; display: inline-block; width: 0.7em; height: 0.7em; margin-right: 0.35em; border-radius: 2px; background: var(--tick); }
+.qs-key.pivot::before { background: var(--desc); }
+.qs-key.swapped::before { background: var(--rival); }
+.qs-key.done::before { background: var(--anc); }

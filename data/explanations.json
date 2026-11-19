@@ -34,6 +34,10 @@
   "left_open": "Many logicians were not convinced that function substitution captured everything a human calculator does. A language of nested substitution does not obviously resemble working through a calculation on paper. The definition needed independent support, and it arrived within months from Alan Turing, who started from a very different picture: a machine that reads and writes symbols on a tape.",
   "diagram": "diagrams/CS003.svg",
   "diagram_alt": "A function (lambda x. x + 1) applied to 2 reduces to 2 + 1 and then to 3. Below, three boxes joined by equals signs: lambda-definable, Turing-computable and general recursive functions are the same class.",
+  "widget": {
+   "type": "stepper",
+   "config": "widgets/church.json"
+  },
   "review": [
    "Church's 1936 paper cites Gödel and uses Gödel's arithmetization (basis for E004 explicit)",
    "McCarthy 1960 cites Church's lambda notation (basis for E022 explicit)",
@@ -175,6 +179,10 @@
   "left_open": "The method fails if road lengths can be negative, which later algorithms such as Bellman–Ford handle. Its roughly quadratic cost was fine for small maps but not for very large sparse ones, until better data structures reduced it. And the paper had no general way to compare algorithms or say what is fundamentally hard: that needed a theory of computational complexity, which began in the following decade.",
   "diagram": "diagrams/CS013.svg",
   "diagram_alt": "A small road map with towns S, A, B, C and T and numbered road lengths. Distances settle in the order S 0, B 2, A 3, C 8, T 11, and the shortest route S, B, A, C, T of length 11 is highlighted.",
+  "widget": {
+   "type": "stepper",
+   "config": "widgets/dijkstra.json"
+  },
   "review": [
    "OSPF uses shortest-path-first (Dijkstra) computation",
    "E026 (CS013 to CS020) is interpretive: a reading that Dijkstra's cost accounting foreshadows complexity theory",
@@ -218,6 +226,10 @@
   "left_open": "In the worst case, for example when the input is already sorted and the pivot is always the first item, Quicksort takes time proportional to the square of the number of items. Good pivot choice, such as taking the median of three items or choosing at random, makes this rare but not impossible, and later hybrids such as introsort add a safety net. Quicksort is also not stable, meaning that equal items may change their order, which matters when sorting by several keys one after another.",
   "diagram": "diagrams/CS016.svg",
   "diagram_alt": "A row of eight numbers is partitioned around the pivot 5 into the smaller items 2, 1, 3, 4 on the left and the larger items 8, 9, 7 on the right; each side is then sorted the same way.",
+  "widget": {
+   "type": "stepper",
+   "config": "widgets/quicksort.json"
+  },
   "review": [
    "Hoare invented Quicksort while working on machine translation in Moscow (his own recollection)",
    "The 1962 paper presents the algorithm in ALGOL 60 (basis for ghost G007 and edge E033, tagged explicit)",

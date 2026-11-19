@@ -17,11 +17,11 @@ Walking skeleton first: render all 79 nodes with era bands and selection highlig
 - **M3d (era E6, 1995-2008, CS055-CS067): done and committed.**
 - **M3e (era E7, 2009-2023, CS068-CS079): built and committed** (`cc562cd`); its short review is still open (see "M3e review" below). **All 79 papers are now authored**, with no placeholder edges left.
 - **Widget list for M4: agreed** (task 4.2, see spec section 5.5): 12 papers served by five reusable widget types.
-- **M4 in progress.** Task 4.1 (the contract) is done, and the first widget is built: the **stepper** type with the **Turing machine** (CS004). Remaining: the other three stepper papers (Church, Dijkstra, Quicksort) need only a model each; then slider model (4 papers), training loop (2), graph iteration (1) and message simulator (1). The author should look at the Turing widget before the rest are built.
+- **M4 in progress.** Task 4.1 (the contract) is done, and the whole **stepper** type is built with all four of its papers: Turing machine (CS004), Church's lambda calculus (CS003), Dijkstra's shortest paths (CS013) and Quicksort (CS016). Each of those three needed only a model and a config. Remaining: slider model (4 papers), training loop (2), graph iteration (1) and message simulator (1) — 8 of the 12 papers.
 - **Next:** finish M4, then M5 (polish and hardening). The strict validator (`tests/validate.html?strict=1`, the project's definition of done for content) is the gate for M3, and its result is recorded under "M3e review".
 - **Tests** (open any through Live Server; the page title reads ALL PASSED, and each page lists every check):
-  - `tests/unit.html`: 57 checks (layout, traversal, the validator rules, the theme logic, and the widget code).
-  - `tests/smoke.html`: 53 checks; mounts the real app on its own page and drives it, and loads the real `index.html` to test the theme toggle.
+  - `tests/unit.html`: 79 checks (layout, traversal, the validator rules, the theme logic, and the widget code, including every stepper model).
+  - `tests/smoke.html`: 61 checks; mounts the real app on its own page and drives it, and loads the real `index.html` to test the theme toggle. It is written for a desktop-sized window: in a small one (for example headless Edge's default 800×600) two layout tests fail, so run it at 1500×900 or larger.
   - `tests/validate.html`: data integrity (spec section 7). Default is scoped to authored papers; add `?strict=1` for the definition of done (it fails until all 79 are authored and no placeholder edges remain).
 
 ### M3e review (author decisions)
@@ -178,7 +178,7 @@ Checkpoint after 3e: cross-era pass. Read all edges that cross era boundaries an
 |---|---|---|
 | 4.1 | Widget contract: `mount(container, config)` returning a handle with `destroy()`, load on demand | **Done.** Panel mounts and cleans up a widget when the selection changes; 40 rapid select/deselect cycles leave zero widgets and zero timers (tested, and the test fails if cleanup is removed) |
 | 4.2 | Pick the final 10–15 widget papers from the spec's candidate list, with the author | **Done:** 12 papers agreed and recorded in spec section 5.5 (stepper ×4, slider model ×4, training loop ×2, graph iteration ×1, message simulator ×1) |
-| 4.3 | Build the five reusable widget types (stepper, slider model, training loop, graph iteration, message simulator) and configure each of the 12 papers | Each widget works with keyboard and mouse, resets, and has a one-line caption |
+| 4.3 | Build the five reusable widget types (stepper, slider model, training loop, graph iteration, message simulator) and configure each of the 12 papers | Each widget works with keyboard and mouse, resets, and has a one-line caption. **Progress: stepper type done, 4 of 12 papers** (CS003, CS004, CS013, CS016); the other four types and 8 papers remain |
 | 4.4 | Manual test of each widget, including mount/unmount cycles | No console errors; no leaked listeners |
 
 ### M5: Polish and hardening
