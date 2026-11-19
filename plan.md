@@ -18,11 +18,37 @@ Walking skeleton first: render all 79 nodes with era bands and selection highlig
 - **M3e (era E7, 2009-2023, CS068-CS079): built and committed** (`cc562cd`); its short review is still open (see "M3e review" below). **All 79 papers are now authored**, with no placeholder edges left.
 - **Widget list for M4: agreed** (task 4.2, see spec section 5.5): 12 papers served by five reusable widget types.
 - **M4 in progress.** Task 4.1 (the contract) is done, and the whole **stepper** type is built with all four of its papers: Turing machine (CS004), Church's lambda calculus (CS003), Dijkstra's shortest paths (CS013) and Quicksort (CS016). Each of those three needed only a model and a config. Remaining: slider model (4 papers), training loop (2), graph iteration (1) and message simulator (1) — 8 of the 12 papers.
-- **Next:** finish M4, then M5 (polish and hardening). The strict validator (`tests/validate.html?strict=1`, the project's definition of done for content) is the gate for M3, and its result is recorded under "M3e review".
+- **Next:** the label prototype (T6), then finish M4, then the Tier A expansion, then M5 (polish and hardening). The order and the decisions behind it are under "Open threads and sequence" below. The strict validator (`tests/validate.html?strict=1`, the project's definition of done for content) is the gate for M3, and its result is recorded under "M3e review".
 - **Tests** (open any through Live Server; the page title reads ALL PASSED, and each page lists every check):
   - `tests/unit.html`: 79 checks (layout, traversal, the validator rules, the theme logic, and the widget code, including every stepper model).
-  - `tests/smoke.html`: 61 checks; mounts the real app on its own page and drives it, and loads the real `index.html` to test the theme toggle. It is written for a desktop-sized window: in a small one (for example headless Edge's default 800×600) two layout tests fail, so run it at 1500×900 or larger.
+  - `tests/smoke.html`: 62 checks; mounts the real app on its own page and drives it, and loads the real `index.html` to test the theme toggle. It is written for a desktop-sized window: in a small one (for example headless Edge's default 800×600) two layout tests fail, so run it at 1500×900 or larger.
   - `tests/validate.html`: data integrity (spec section 7). Default is scoped to authored papers; add `?strict=1` for the definition of done (it fails until all 79 are authored and no placeholder edges remain).
+
+### Open threads and sequence (agreed 2026-11-19)
+
+**Decisions made**
+
+| Thread | Decision | Consequence |
+|---|---|---|
+| T4 corpus scope | **Tier A of `docs/CANDIDATE_ADDITIONS.md` (47 works) plus Java, test-driven development and domain-driven design: 50 additions. No Tier B.** | About 121 papers on the canvas (79 now, 8 of the additions are ghosts being promoted, so about 42 new nodes). 12 of the 20 ghost slots stay free. Everything the audit listed is from memory, so each title, year and author is verified before it enters the data. |
+| T5 overview legibility | **Labels appear by importance as you zoom.** At fit zoom only the foundational papers are labelled; more appear as you zoom in; a selected paper's lineage is always labelled. | Replaces the open M1 item 1. Needs a prototype on about 120 stub nodes before any authoring (T6). |
+| T2 widget layout | **Reference tables sit below the controls and caption.** | Done: the stepper has a reference area after the caption; the Turing and Church tables use it. The amount of widget text was left as is. |
+
+**Threads and order**
+
+| # | Thread | Whose move | Needs | Order |
+|---|---|---|---|---|
+| T1 | Commit the stepper work | Me | none | Done (`0b361b6`, `91ec9c4`) |
+| T2 | Move reference tables below the controls | Me | none | Done |
+| T6 | Prototype importance-based labels on about 120 stub nodes | Me | T5 | Next |
+| T3 | Finish M4: slider (CS008, CS021, CS034, CS065), graph iteration (CS057), training loop (CS048, CS070), message simulator (CS058); then task 4.4 | Me | none | After T6 |
+| T7 | Expansion: generalise the validator and tests (they hard-code 79), promote the 8 ghosts, author Tier A and the three extras in era batches | Me | T4, T6 | After T6; parallel with T3 only if the author wants |
+| T8 | Review-queue verification (starts with section A, the explicit edges; grows with T7) | Author | none | In parallel with T7 |
+| T9 | M5 polish and hardening, including the Firefox check and README | Me | T3, T7 | After content is frozen; 5.3 and 5.6 may move earlier |
+| T10 | Keep "79" wording and the status block current | Me | T4 | Continuous |
+| T11 | Narrate-a-chain test on 5 random papers | Author | T9 | Last |
+
+Critical path: T4 → T7 → T8 → T9 → T11. M4 (T3) is off it. The smoke test that asserts the `slider` type is "not built yet" must be updated when the slider type lands.
 
 ### M3e review (author decisions)
 
