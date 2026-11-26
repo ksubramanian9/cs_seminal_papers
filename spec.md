@@ -174,7 +174,7 @@ A small widget library with a common contract: a widget module exports `mount(co
 |---|---|---|---|---|
 | CS003 Church | 1910–39 | Foundations | Step a lambda expression through substitution to its result | stepper |
 | CS004 Turing | 1910–39 | Foundations | Run a tiny Turing machine: tape, head, state and rule table | stepper |
-| CS008 Shannon | 1940–61 | Information theory | Edit symbol probabilities; see entropy in bits, the compression limit and a noisy channel | slider model |
+| CS008 Shannon | 1940–61 | Information theory | Edit symbol weights; see entropy in bits, the Huffman code that approaches it and a noisy channel's capacity (built) | slider model |
 | CS013 Dijkstra | 1940–61 | Algorithms | Settle nodes of a small map in order of distance, with the distance table updating | stepper |
 | CS016 Quicksort | 1962–69 | Algorithms | Pick a pivot, partition with two pointers, recurse (built; the comparison with a slow sort was dropped to keep the widget focused) | stepper |
 | CS021 Amdahl | 1962–69 | Architecture | Sliders for parallel fraction and processors; a speedup curve that flattens | slider model |

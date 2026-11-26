@@ -110,6 +110,10 @@
   "left_open": "Shannon proved that good codes exist without saying how to build practical ones. It took decades of work, from Hamming and Reed–Solomon to turbo and LDPC codes, to approach capacity. And his information is about symbols, not significance: the theory deliberately ignores what a message means, so it says nothing about meaning, relevance or understanding.",
   "diagram": "diagrams/CS008.svg",
   "diagram_alt": "A communication chain: source, encoder, noisy channel with a noise source feeding in, decoder, destination. Below, three notes: entropy H is the average information in bits, a source can be compressed to about H, and reliable communication is possible below channel capacity C.",
+  "widget": {
+   "type": "slider",
+   "config": "widgets/shannon.json"
+  },
   "review": [
    "E012 (CS005 to CS008) is interpretive: it reads Shannon's move from binary switches to binary information as one line of thought"
   ]
@@ -301,6 +305,10 @@
   "left_open": "The argument assumes the problem size is fixed, which is why it is pessimistic: with bigger machines people run bigger jobs, where the sequential fraction can shrink. It treats the sequential fraction as given, though a better algorithm can sometimes reduce it. And it ignores the costs of communication and coordination between processors, which in practice often limit speedup earlier than the serial fraction does.",
   "diagram": "diagrams/CS021.svg",
   "diagram_alt": "A chart of speedup against number of processors on a logarithmic axis. Curves for tasks that are 50, 90 and 95 per cent parallel flatten out at speedups of 2, 10 and 20 however many processors are added.",
+  "widget": {
+   "type": "slider",
+   "config": "widgets/amdahl.json"
+  },
   "review": [
    "The 1967 paper states the argument in words; the speedup formula was derived afterwards by others",
    "Amdahl's 1967 sentence: parallel effort is wasted unless accompanied by sequential improvements of the same magnitude",
@@ -496,6 +504,10 @@
   "left_open": "The rule of thumb is based on one large project and Brooks’s observation, not on controlled studies, and there are exceptions, for example when a project is in a phase that parallelises well. Some of his advice, such as planning to throw one version away, was revised by Brooks himself in favour of growing a system incrementally. The surgical team is hard to staff in practice. And the book was written for in-house development by large organisations, before open-source communities, distributed teams and modern tools changed how software is made.",
   "diagram": "diagrams/CS034.svg",
   "diagram_alt": "A schematic chart of time to finish against number of workers. The ideal curve falls steadily if work were perfectly divisible, but the real curve falls, bottoms out, then rises again as communication and training overhead grow, so more people make the project later.",
+  "widget": {
+   "type": "slider",
+   "config": "widgets/brooks.json"
+  },
   "review": [
    "Brooks managed OS/360 development at IBM; Turing Award 1999; anniversary edition 1995",
    "Communication paths grow as n(n-1)/2 for a team of n",
@@ -946,6 +958,10 @@
   "left_open": "Privacy is bought with accuracy. Strong guarantees add enough noise to harm small datasets and detailed statistics, and choosing ε is a social decision with no agreed answer. The budget limits how many questions can be asked. Guarantees apply to what the mechanism releases, and are weakened when data about the same person appears in many records, or when others can infer things from correlated data. Deploying it correctly is subtle, and implementation errors can destroy the guarantee.",
   "diagram": "diagrams/CS065.svg",
   "diagram_alt": "Two almost overlapping probability curves: the distribution of a noisy answer computed with one person's data included and without it. The probabilities differ by at most a factor of e to the epsilon, so the answer reveals almost nothing about any individual.",
+  "widget": {
+   "type": "slider",
+   "config": "widgets/privacy.json"
+  },
   "review": [
    "Dwork, ICALP 2006; related paper by Dwork, McSherry, Nissim and Smith, 'Calibrating noise to sensitivity' (2006)",
    "The 2020 US Census used differential privacy; the company deployments named are from public announcements",

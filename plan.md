@@ -17,11 +17,11 @@ Walking skeleton first: render all 79 nodes with era bands and selection highlig
 - **M3d (era E6, 1995-2008, CS055-CS067): done and committed.**
 - **M3e (era E7, 2009-2023, CS068-CS079): built and committed** (`cc562cd`); its short review is still open (see "M3e review" below). **All 79 papers are now authored**, with no placeholder edges left.
 - **Widget list for M4: agreed** (task 4.2, see spec section 5.5): 12 papers served by five reusable widget types.
-- **M4 in progress.** Task 4.1 (the contract) is done, and the whole **stepper** type is built with all four of its papers: Turing machine (CS004), Church's lambda calculus (CS003), Dijkstra's shortest paths (CS013) and Quicksort (CS016). Each of those three needed only a model and a config. Remaining: slider model (4 papers), training loop (2), graph iteration (1) and message simulator (1) — 8 of the 12 papers.
+- **M4 in progress.** Task 4.1 (the contract) is done, and two of the five widget types are built, serving 8 of the 12 papers. The **stepper** type: Turing machine (CS004), Church's lambda calculus (CS003), Dijkstra's shortest paths (CS013) and Quicksort (CS016). The **slider** type: Shannon's entropy, Huffman codes and channel capacity (CS008), Amdahl's law (CS021), Brooks's law (CS034) and differential privacy (CS065). Remaining: graph iteration (PageRank, CS057), training loop (backpropagation CS048 and GAN CS070) and message simulator (Paxos, CS058) — 4 of the 12 papers.
 - **Next:** finish M4 (sliders first), then the Tier A expansion, then M5 (polish and hardening). The order and the decisions behind it are under "Open threads and sequence" below. The strict validator (`tests/validate.html?strict=1`, the project's definition of done for content) is the gate for M3, and its result is recorded under "M3e review".
 - **Tests** (open any through Live Server; the page title reads ALL PASSED, and each page lists every check):
-  - `tests/unit.html`: 93 checks (layout, label choice, traversal, the validator rules, the theme logic, and the widget code, including every stepper model).
-  - `tests/smoke.html`: 66 checks; mounts the real app on its own page and drives it, and loads the real `index.html` to test the theme toggle. It is written for a desktop-sized window: in a small one (for example headless Edge's default 800×600) two layout tests fail, so run it at 1500×900 or larger.
+  - `tests/unit.html`: 104 checks (layout, label choice, traversal, the validator rules, the theme logic, and the widget code, including every stepper and slider model).
+  - `tests/smoke.html`: 71 checks; mounts the real app on its own page and drives it, and loads the real `index.html` to test the theme toggle. It is written for a desktop-sized window: in a small one (for example headless Edge's default 800×600) two layout tests fail, so run it at 1500×900 or larger.
   - `tests/validate.html`: data integrity (spec section 7). Default is scoped to authored papers; add `?strict=1` for the definition of done (it fails until all 79 are authored and no placeholder edges remain).
 
 ### Open threads and sequence (agreed 2026-11-19)
@@ -41,7 +41,7 @@ Walking skeleton first: render all 79 nodes with era bands and selection highlig
 | T1 | Commit the stepper work | Me | none | Done (`0b361b6`, `91ec9c4`) |
 | T2 | Move reference tables below the controls | Me | none | Done |
 | T6 | Importance-based labels, tested on about 120 stand-in nodes | Me | T5 | Done (`82be31c`); result below |
-| T3 | Finish M4: slider (CS008, CS021, CS034, CS065), graph iteration (CS057), training loop (CS048, CS070), message simulator (CS058); then task 4.4 | Me | none | After T6 |
+| T3 | Finish M4: slider (CS008, CS021, CS034, CS065), graph iteration (CS057), training loop (CS048, CS070), message simulator (CS058); then task 4.4 | Me | none | In progress: stepper and slider types done (8 of 12 papers); graph iteration, training loop and message simulator remain |
 | T7 | Expansion: generalise the validator and tests (they hard-code 79), promote the 8 ghosts, author Tier A and the three extras in era batches | Me | T4, T6 | After T6; parallel with T3 only if the author wants |
 | T8 | Review-queue verification (starts with section A, the explicit edges; grows with T7) | Author | none | In parallel with T7 |
 | T9 | M5 polish and hardening, including the Firefox check and README | Me | T3, T7 | After content is frozen; 5.3 and 5.6 may move earlier |
@@ -60,7 +60,7 @@ Measured on the real 79 papers and on 121 (the 79 plus 42 stand-ins, `tests/stub
 
 Lanes stay compact (the world is about 20% taller with 121 papers, not 50%), so the whole map still fits. The rest of the papers are named on hover or when zoomed in. Limits worth knowing: in a dense cluster (for example the 1970s database papers) a label may not fit even for an important paper; a selection's lineage is named where there is room but not always in full (50 to 70% at panel-open width on the real papers; for example 18 of the 29 papers in SWE-bench's lineage), and the lineage-first ordering adds only a few labels over plain importance order because the ranking already favours those papers; and with a selection, labels outside the lineage stay on screen but dimmed. Two things were tried and rejected: reserving label room in the lanes (it makes lanes taller, which shrinks the fit zoom and cancels the gain) and a right-only placement (about 35% named instead of 70% at 121 papers).
 
-`tests/labels-preview.html` renders the map with the real papers, or with the stand-ins (`?stubs=1`), at a chosen zoom (`&zoom=N`) or selection (`&sel=CS075`); it is a viewing aid, not a test. The stand-in papers are test data only and are not in `data/`.
+`tests/widget-preview.html?paper=CS021` mounts one paper's widget at panel width for looking at it on its own (`&theme=dark`, `&set=id:value,...` to move sliders, `&press=text&repeat=N` to press a button). `tests/labels-preview.html` renders the map with the real papers, or with the stand-ins (`?stubs=1`), at a chosen zoom (`&zoom=N`) or selection (`&sel=CS075`); it is a viewing aid, not a test. The stand-in papers are test data only and are not in `data/`.
 
 Critical path: T4 → T7 → T8 → T9 → T11. M4 (T3) is off it. The smoke test that asserts the `slider` type is "not built yet" must be updated when the slider type lands.
 
@@ -218,7 +218,7 @@ Checkpoint after 3e: cross-era pass. Read all edges that cross era boundaries an
 |---|---|---|
 | 4.1 | Widget contract: `mount(container, config)` returning a handle with `destroy()`, load on demand | **Done.** Panel mounts and cleans up a widget when the selection changes; 40 rapid select/deselect cycles leave zero widgets and zero timers (tested, and the test fails if cleanup is removed) |
 | 4.2 | Pick the final 10–15 widget papers from the spec's candidate list, with the author | **Done:** 12 papers agreed and recorded in spec section 5.5 (stepper ×4, slider model ×4, training loop ×2, graph iteration ×1, message simulator ×1) |
-| 4.3 | Build the five reusable widget types (stepper, slider model, training loop, graph iteration, message simulator) and configure each of the 12 papers | Each widget works with keyboard and mouse, resets, and has a one-line caption. **Progress: stepper type done, 4 of 12 papers** (CS003, CS004, CS013, CS016); the other four types and 8 papers remain |
+| 4.3 | Build the five reusable widget types (stepper, slider model, training loop, graph iteration, message simulator) and configure each of the 12 papers | Each widget works with keyboard and mouse, resets, and has a one-line caption. **Progress: stepper type (4 papers) and slider type (4 papers) done, 8 of 12**; graph iteration, training loop and message simulator remain |
 | 4.4 | Manual test of each widget, including mount/unmount cycles | No console errors; no leaked listeners |
 
 ### M5: Polish and hardening

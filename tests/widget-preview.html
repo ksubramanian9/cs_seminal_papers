@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget preview (not a test)</title>
+<script>
+  // Same theme handling as index.html, so ?theme=dark works here too.
+  try {
+    var q = new URLSearchParams(location.search);
+    var t = q.get('theme') || localStorage.getItem('cs-theme');
+    if (t !== 'light' && t !== 'dark') t = 'light';
+    document.documentElement.dataset.theme = t;
+  } catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/styles.css">
+<style> body { margin: 0; padding: 16px; } #host { width: 388px; } </style>
+</head>
+<body>
+<!--
+  Mounts one paper's widget at the width it has in the detail panel, for looking at it on its own.
+    widget-preview.html?paper=CS021                 the widget declared for that paper in data/explanations.json
+    &theme=dark                                      dark theme
+    &set=parallel:99,processors:1024                 move sliders (by slider id) to these values (for a discrete slider, the value, not the index)
+    &press=Release                                   press the first button whose label contains this text, once per repeat
+    &repeat=3                                        how many times to press
+-->
+<div id="host" class="widget-host"></div>
+<script type="module">
+import { mountWidget } from '../js/widgets/index.js';
+
+const q = new URLSearchParams(location.search);
+const explanations = await fetch('../data/explanations.json').then((r) => r.json());
+const spec = explanations[q.get('paper')]?.widget;
+const host = document.getElementById('host');
+if (!spec) { host.textContent = `No widget declared for ${q.get('paper')}`; }
+else {
+  const w = mountWidget(host, spec);
+  await w.ready;
+  for (const pair of (q.get('set') || '').split(',').filter(Boolean)) {
+    const [id, value] = pair.split(':');
+    const input = [...host.querySelectorAll('input[type=range]')].find((i) => i.id.endsWith(`-${id}`));
+    if (!input) continue;
+    // discrete sliders store an index; find the option whose label (the output text) starts with the value
+    const cfg = await fetch(`../${spec.config}`).then((r) => r.json());
+    const s = (cfg.sliders || []).find((x) => x.id === id);
+    input.value = s?.values ? String(s.values.indexOf(Number(value))) : value;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  const text = q.get('press');
+  if (text) for (let i = 0; i < Number(q.get('repeat') || 1); i++) [...host.querySelectorAll('button')].find((b) => b.textContent.includes(text))?.click();
+  document.title = 'ready';
+}
+</script>
+</body>
+</html>

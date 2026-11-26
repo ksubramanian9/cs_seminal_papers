@@ -1,0 +1,54 @@
+{
+  "model": "shannon",
+  "title": "How few bits does a message need?",
+  "caption": "Give the four symbols different weights and watch the entropy, the fewest bits per symbol any code can average, fall below the 2 bits of a fixed code. Huffman's code gets within one bit of it. The right-hand curve is Shannon's other result: a channel that flips bits can still carry information, up to its capacity, if the message is coded well enough.",
+  "symbols": [
+    "A",
+    "B",
+    "C",
+    "D"
+  ],
+  "sliders": [
+    {
+      "id": "w0",
+      "label": "Weight of A",
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "value": 4
+    },
+    {
+      "id": "w1",
+      "label": "Weight of B",
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "value": 2
+    },
+    {
+      "id": "w2",
+      "label": "Weight of C",
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "value": 1
+    },
+    {
+      "id": "w3",
+      "label": "Weight of D",
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "value": 1
+    },
+    {
+      "id": "noise",
+      "label": "Bits flipped by the channel",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "value": 11,
+      "unit": "%"
+    }
+  ]
+}

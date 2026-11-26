@@ -1,0 +1,32 @@
+{
+  "model": "privacy",
+  "title": "Noise that hides one person",
+  "caption": "A count is released with random noise added. The two curves show how likely each published answer is without you in the data and with you in it. Lowering ε blurs the two curves together, so your presence is harder to detect, but the answers get less accurate. Release a few counts to see the noise.",
+  "trueCount": 40,
+  "seed": 20060101,
+  "sliders": [
+    {
+      "id": "epsilon",
+      "label": "Privacy budget ε",
+      "values": [
+        0.05,
+        0.1,
+        0.2,
+        0.5,
+        1,
+        2,
+        5,
+        10
+      ],
+      "value": 1
+    },
+    {
+      "id": "tolerance",
+      "label": "Close enough means within",
+      "min": 1,
+      "max": 20,
+      "step": 1,
+      "value": 5
+    }
+  ]
+}

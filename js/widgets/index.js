@@ -23,6 +23,7 @@ const ROOT_URL = new URL('../../', import.meta.url);
 /** Module loaders, one per implemented type. Types listed in WIDGET_TYPE_NAMES but missing here are not built yet. */
 const LOADERS = {
   stepper: () => import('./stepper.js'),
+  slider: () => import('./slider.js'),
 };
 
 async function fetchConfig(path) {

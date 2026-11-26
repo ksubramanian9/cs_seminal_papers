@@ -577,7 +577,7 @@ await check('widget: destroying before loading finishes mounts nothing', async (
 await check('widget: a missing config, an unknown type and a not-yet-built type all show a message, never throw', async () => {
   const before = widgetStats();
   for (const spec of [{ type: 'stepper', config: 'widgets/does-not-exist.json' }, { type: 'carousel', config: 'widgets/turing.json' },
-                      { type: 'slider', config: 'widgets/turing.json' }, { type: 'stepper' }, null]) {
+                      { type: 'training', config: 'widgets/turing.json' }, { type: 'stepper' }, null]) {
     const host = d.createElement('div'); d.body.appendChild(host);
     const wdg = mountWidget(host, spec);
     await wdg.ready;
@@ -685,6 +685,103 @@ await check('widget CS016: another list (commas allowed), and invalid input', as
   }
 });
 
+/* ---------- slider widgets: Shannon (CS008), Amdahl (CS021), Brooks (CS034), differential privacy (CS065) ---------- */
+const sliderEl = (id) => [...panelEl.querySelectorAll('.sl-range')].find((i) => i.id.endsWith(`-${id}`));
+const setSlider = (id, value) => {
+  const i = sliderEl(id);
+  i.value = String(value); // the slider's own value: an index for a list of values
+  i.dispatchEvent(new Event('input', { bubbles: true }));
+};
+const readout = (label) => [...panelEl.querySelectorAll('.sl-readouts dt')].find((t) => t.textContent === label)?.nextElementSibling.firstChild.textContent;
+const sliderOut = (id) => sliderEl(id).parentElement.querySelector('.sl-value').textContent;
+const status = () => wq('.widget-status').textContent;
+
+await check('widget CS021: Amdahl: labelled sliders, a chart, readouts; moving a slider updates them, and Reset restores them', async () => {
+  await selectWidgetPaper('CS021');
+  assert(wq('.widget.slider-widget') && wq('.sl-chart') && panelEl.querySelectorAll('.sl-range').length === 2 && wq('.widget-caption').textContent.length > 60);
+  for (const i of panelEl.querySelectorAll('.sl-range')) assert(i.labels?.length === 1 && i.labels[0].textContent.length > 3 && i.getAttribute('aria-valuetext'), 'every slider has a label and a spoken value');
+  assert(readout('Speedup now') === '8.77×' && readout('Ceiling') === '10×' && sliderOut('parallel') === '90%' && sliderOut('processors') === '64', `${readout('Speedup now')}`);
+  assert(wq('.sl-chart').getAttribute('role') === 'img' && /8\.77 times on 64 processors/.test(wq('.sl-chart').getAttribute('aria-label')));
+  setSlider('parallel', 50);
+  assert(readout('Ceiling') === '2.0×' && readout('Speedup now') === '1.97×' && sliderOut('parallel') === '50%' && /no number of processors can give more than 2\.0× speedup/.test(status()), status());
+  setSlider('processors', 10); // the list of values is 1, 2, 4, ..., 4096, so index 10 is 1024
+  assert(sliderOut('processors') === '1024' && readout('Speedup now') === '2.00×', readout('Speedup now'));
+  setSlider('parallel', 100);
+  assert(readout('Ceiling') === 'none' && /keeps growing/.test(status()), 'no ceiling when everything is parallel');
+  click(wbtn(/Reset/));
+  assert(sliderOut('parallel') === '90%' && sliderOut('processors') === '64' && readout('Speedup now') === '8.77×', 'reset restores the starting values');
+});
+
+await check('widget CS008: Shannon: entropy and Huffman codes follow the weights; zero weight everywhere is explained; noise sets the capacity', async () => {
+  await selectWidgetPaper('CS008');
+  const codes = () => [...panelEl.querySelectorAll('.sl-code')].map((t) => t.textContent).join(' ');
+  assert(readout('Entropy') === '1.75 bits per symbol' && readout('Fixed-length code') === '2 bits per symbol' && readout('Huffman code (average)') === '1.75 bits per symbol', readout('Entropy'));
+  assert(codes() === '0 10 110 111' && readout('Channel capacity') === '0.50 bits per use', codes());
+  for (const id of ['w0', 'w1', 'w2', 'w3']) setSlider(id, 3);
+  assert(readout('Entropy') === '2.00 bits per symbol' && readout('Huffman code (average)') === '2.00 bits per symbol' && !/Huffman's code gets/.test(status()), 'equal weights: no saving is possible');
+  setSlider('w1', 0); setSlider('w2', 0); setSlider('w3', 0);
+  assert(readout('Entropy') === '0.00 bits per symbol' && /nothing needs to be sent/.test(status()), status());
+  setSlider('w0', 0);
+  assert(readout('Entropy') === '—' && /at least one symbol some weight/.test(status()) && panelEl.querySelectorAll('.sl-bar').length === 4, 'nothing to show, and it says why');
+  setSlider('noise', 50);
+  assert(readout('Channel capacity') === '0.00 bits per use' && sliderOut('noise') === '50%', 'a channel that flips half the bits carries nothing');
+  setSlider('noise', 0);
+  assert(readout('Channel capacity') === '1.00 bits per use');
+});
+
+await check('widget CS034: Brooks: the paths drawn match n(n-1)/2, and passing the best team size is called out', async () => {
+  await selectWidgetPaper('CS034');
+  assert(readout('Communication paths') === '28' && panelEl.querySelectorAll('.bk-path').length === 28 && panelEl.querySelectorAll('.bk-person').length === 8);
+  assert(readout('Best team size') === '22 people' && /More people still help/.test(status()), status());
+  setSlider('team', 40);
+  assert(readout('Communication paths') === '780' && panelEl.querySelectorAll('.bk-path').length === 780 && readout('Time to finish') === '5.1 months', readout('Time to finish'));
+  assert(/makes the project later/.test(status()) && wq('.sl-dot.past'), 'past the best size is called out, in words and in colour');
+  setSlider('team', 22);
+  assert(/best team size/.test(status()) && !wq('.sl-dot.past'));
+  setSlider('cost', 0);
+  assert(readout('Best team size') === '40 people', 'with free communication more people always help');
+  click(wbtn(/Reset/));
+  assert(readout('Communication paths') === '28' && sliderOut('cost') === '0.2');
+});
+
+await check('widget CS065: differential privacy: the guarantee readout follows epsilon; released counts appear, repeat deterministically and are cleared when epsilon moves', async () => {
+  await selectWidgetPaper('CS065');
+  const dots = () => panelEl.querySelectorAll('.dp-draw').length;
+  assert(readout('Typical error') === '±1.0' && readout('Privacy guarantee') === '×2.72 at most' && dots() === 0 && /Release a noisy count/.test(status()));
+  const release = () => click([...panelEl.querySelectorAll('.widget-controls button')].find((b) => /Release a noisy count/.test(b.textContent)));
+  release(); release(); release();
+  assert(dots() === 3 && /Last released answer: \d+\.\d \(the true count is 40\)/.test(status()), status());
+  const first = status();
+  setSlider('epsilon', 5); // the list is 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10: index 5 is 2
+  assert(sliderOut('epsilon') === '2' && dots() === 0 && readout('Privacy guarantee') === '×7.39 at most', 'a new epsilon starts a new set of released counts');
+  setSlider('epsilon', 7);
+  assert(readout('Privacy guarantee') === '×22,026 at most' && readout('Typical error') === '±0.10', readout('Privacy guarantee'));
+  setSlider('epsilon', 0);
+  assert(readout('Typical error') === '±20.0' && readout('Privacy guarantee') === '×1.05 at most' && /^\d+%$/.test(readout('Answer within ±5')), 'tiny epsilon: very noisy, almost no distinguishing power');
+  click(wbtn(/Reset/));
+  assert(sliderOut('epsilon') === '1' && dots() === 0);
+  release(); release(); release();
+  assert(status() === first, 'after Reset the same clicks give the same released counts');
+});
+
+await check('widgets: a slider config\u2019s text is shown as text; bad configs are rejected clearly; destroy leaves nothing behind', async () => {
+  const cfg = await fetch('../widgets/amdahl.json').then((r) => r.json());
+  const evil = '<img src=x onerror="window.__pwnedS=1"><script>window.__pwnedS=2<\/script>';
+  const host = d.createElement('div'); d.body.appendChild(host);
+  const before = widgetStats();
+  const { mount: mountSlider } = await import('../js/widgets/slider.js');
+  const h = mountSlider(host, { ...cfg, title: evil, caption: evil, sliders: cfg.sliders.map((s) => ({ ...s, label: evil })) });
+  await sleep(100);
+  assert(!host.querySelector('img') && !host.querySelector('script') && !w.__pwnedS && host.textContent.includes('<img src=x'), 'markup stayed text');
+  assert(widgetStats().timers === before.timers, 'a slider widget starts no timers');
+  h.destroy();
+  assert(host.textContent === '', 'destroy removes the widget DOM'); host.remove();
+  let m1 = '', m2 = '';
+  try { mountSlider(d.createElement('div'), { model: 'nope', sliders: [{}] }); } catch (e) { m1 = e.message; }
+  try { mountSlider(d.createElement('div'), { model: 'amdahl', sliders: [] }); } catch (e) { m2 = e.message; }
+  assert(/unknown slider model/.test(m1) && /at least one slider/.test(m2), `${m1} / ${m2}`);
+});
+
 await check('widget layout: the picture, status and controls stay together; the reference table comes after the caption', async () => {
   const after = (a, b) => !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING); // b follows a
   for (const [id, picture, table] of [['CS004', '.tm-tape', '.tm-rules'], ['CS003', '.lc-term', '.lc-defs']]) {
@@ -706,9 +803,9 @@ await check('widget layout: the picture, status and controls stay together; the 
   }
 });
 
-await check('widgets: moving between all four widget papers, and closing, leaves no widget or timer behind', async () => {
+await check('widgets: moving between all eight widget papers, and closing, leaves no widget or timer behind', async () => {
   for (let round = 0; round < 3; round++) {
-    for (const id of ['CS003', 'CS013', 'CS016', 'CS004']) { await selectWidgetPaper(id); click(wbtn(/Play/)); await sleep(20); }
+    for (const id of ['CS008', 'CS003', 'CS021', 'CS013', 'CS034', 'CS016', 'CS065', 'CS004']) { await selectWidgetPaper(id); const play = wbtn(/Play/); if (play) click(play); await sleep(20); }
   }
   assert(widgetStats().mounted === stats0.mounted + 1 && widgetStats().timers >= 1, 'only the current widget is alive');
   esc(); await sleep(50);
