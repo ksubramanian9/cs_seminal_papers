@@ -1,5 +1,5 @@
 /*
- * Stand-in papers for the planned expansion (Tier A of docs/CANDIDATE_ADDITIONS.md, plus Java, TDD
+ * Stand-in papers for the planned expansion (Tier A of content/CANDIDATE_ADDITIONS.md, plus Java, TDD
  * and DDD), used only to test how the canvas copes with about 120 papers before any of them is
  * written. They are NOT part of the data. Years and lanes are real; the short labels are
  * placeholders in the style of the real ones; each stub gets two invented links so that degree

@@ -42,29 +42,33 @@ The stepper and slider widgets are built. The other three types are in progress.
 
 ## Running it
 
-It is a static site with no build step and no server code: plain HTML, CSS, JavaScript, JSON and SVG, plus a local copy of D3 in `vendor/`. It fetches nothing from the internet at run time.
+It is a static site with no build step and no server code: plain HTML, CSS, JavaScript, JSON and SVG, plus a local copy of D3 in `docs/vendor/`. It fetches nothing from the internet at run time.
 
-Because it loads its data with `fetch()`, it has to be served over HTTP rather than opened as a file. The simplest way is VS Code's **Live Server** extension: open the folder and choose "Open with Live Server" on `index.html`. Any static file server works too, for example `python -m http.server`.
+The whole site lives in `docs/`, which contains every file the site needs and refers to them only by relative paths. So it can be published with **GitHub Pages**: in the repository's settings, under Pages, choose "Deploy from a branch", pick `main` and the `/docs` folder. The empty `docs/.nojekyll` file tells Pages to serve the files as they are, without running Jekyll.
+
+Locally, because it loads its data with `fetch()`, it has to be served over HTTP rather than opened as a file. The simplest way is VS Code's **Live Server** extension: choose "Open with Live Server" on `docs/index.html`. Any static file server works too, for example `python -m http.server` run in the repository root, then open `http://localhost:8000/docs/`.
 
 It is designed for desktop browsers (current Chrome, Edge and Firefox) at 1280 × 720 or larger.
 
 ## How it is organised
 
+Everything the site serves is under `docs/`. The project notes stay at the top level.
+
 | Path | What it holds |
 |---|---|
-| `index.html`, `css/`, `js/` | The app. `js/widgets/` holds the widget types and their per-paper models |
-| `data/papers.json` | The 79 papers, converted once from the source CSV and edited by hand since |
-| `data/explanations.json` | The authored explanation for each paper |
-| `data/edges.json` | The links between papers, with type, evidence and "why" |
-| `data/eras.json`, `data/lanes.json`, `data/ghosts.json` | Eras with their questions, the field lanes and their colours, and the context nodes |
-| `diagrams/` | One SVG diagram per paper |
-| `widgets/` | One config file per widget paper |
-| `content/` | The diagram style guide and the queue of claims still to be checked |
-| `docs/` | Notes on works that could be added to the corpus |
-| `tests/` | Browser test pages (see below) |
-| `intent.md`, `spec.md`, `plan.md` | Why the project exists, what it must do, and how it is being built |
+| `docs/index.html`, `docs/css/`, `docs/js/` | The app. `docs/js/widgets/` holds the widget types and their per-paper models |
+| `docs/data/papers.json` | The 79 papers, converted once from the source CSV and edited by hand since |
+| `docs/data/explanations.json` | The authored explanation for each paper |
+| `docs/data/edges.json` | The links between papers, with type, evidence and "why" |
+| `docs/data/eras.json`, `lanes.json`, `ghosts.json` | Eras with their questions, the field lanes and their colours, and the context nodes |
+| `docs/diagrams/` | One SVG diagram per paper |
+| `docs/widgets/` | One config file per widget paper |
+| `docs/vendor/` | The local copy of D3 |
+| `docs/tests/` | Browser test pages (see below) |
+| `content/` | The diagram style guide, the queue of claims still to be checked, and notes on works that could be added to the corpus |
+| `intent.md`, `spec.md`, `plan.md` | Why the project exists, what it must do, and how it is being built. Paths in them such as `data/` or `tests/` are relative to `docs/` |
 
-The JSON files are the source of truth. To add a link, add an entry to `data/edges.json`:
+The JSON files are the source of truth. To add a link, add an entry to `docs/data/edges.json`:
 
 ```json
 { "id": "E145", "from": "CS004", "to": "CS007", "type": "builds_on",
@@ -77,9 +81,9 @@ The JSON files are the source of truth. To add a link, add an entry to `data/edg
 
 Open these pages through the same server. Each one's title reads ALL PASSED when everything is fine, and the page lists every check.
 
-- `tests/validate.html` checks the data. It confirms that every paper has an explanation and at least one link, that every link is well formed and points forward in time, that every referenced file exists, and that the lineage has no cycles. Add `?strict=1` for the full definition of done.
-- `tests/unit.html` runs the unit tests for layout, labels, traversal, the validator, the theme and the widgets.
-- `tests/smoke.html` loads the real app and drives it. Run it in a window of at least 1500 × 900.
+- `docs/tests/validate.html` checks the data. It confirms that every paper has an explanation and at least one link, that every link is well formed and points forward in time, that every referenced file exists, and that the lineage has no cycles. Add `?strict=1` for the full definition of done.
+- `docs/tests/unit.html` runs the unit tests for layout, labels, traversal, the validator, the theme and the widgets.
+- `docs/tests/smoke.html` loads the real app and drives it. Run it in a window of at least 1500 × 900.
 
 ## Status
 

@@ -2,6 +2,8 @@
 
 Companion docs: [intent.md](intent.md), [spec.md](spec.md). Each milestone ends in something the author can run in Live Server and review before the next begins.
 
+The site (app, data, diagrams, widgets, vendor and tests) lives in `docs/` so GitHub Pages can serve it; paths in this document such as `data/` or `tests/` are relative to `docs/`.
+
 ## Approach
 
 Walking skeleton first: render all 79 nodes with era bands and selection highlighting on placeholder edges, then author **one era completely** so the template and tone are judged early, then fill the remaining eras, then add widgets, then polish. Vertical slices, not layers.
@@ -30,7 +32,7 @@ Walking skeleton first: render all 79 nodes with era bands and selection highlig
 
 | Thread | Decision | Consequence |
 |---|---|---|
-| T4 corpus scope | **Tier A of `docs/CANDIDATE_ADDITIONS.md` (47 works) plus Java, test-driven development and domain-driven design: 50 additions. No Tier B.** | About 121 papers on the canvas (79 now, 8 of the additions are ghosts being promoted, so about 42 new nodes). 12 of the 20 ghost slots stay free. Everything the audit listed is from memory, so each title, year and author is verified before it enters the data. |
+| T4 corpus scope | **Tier A of `content/CANDIDATE_ADDITIONS.md` (47 works) plus Java, test-driven development and domain-driven design: 50 additions. No Tier B.** | About 121 papers on the canvas (79 now, 8 of the additions are ghosts being promoted, so about 42 new nodes). 12 of the 20 ghost slots stay free. Everything the audit listed is from memory, so each title, year and author is verified before it enters the data. |
 | T5 overview legibility | **Labels appear by importance as you zoom.** | Replaces the open M1 item 1. Built and tested (T6), see the result below. Note the original wording "only the foundational papers" could not work as stated: 49 of the 79 papers are impact 3, so impact alone ranks too coarsely. |
 | T2 widget layout | **Reference tables sit below the controls and caption.** | Done: the stepper has a reference area after the caption; the Turing and Church tables use it. The amount of widget text was left as is. |
 

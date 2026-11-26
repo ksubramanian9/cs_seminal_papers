@@ -2,6 +2,8 @@
 
 Status: draft v1, derived from the grilling session. Companion docs: [intent.md](intent.md), [plan.md](plan.md).
 
+The site (app, data, diagrams, widgets, vendor and tests) lives in `docs/` so GitHub Pages can serve it; paths in this document such as `data/` or `tests/` are relative to `docs/`.
+
 ## 1. Objective
 
 An interactive, browser-only application that explains each of the 79 works in the source CSV at idea level and shows the conceptual links among them on a time-by-field canvas, so a reader can trace the progression of ideas.
